@@ -1,0 +1,20 @@
+{
+  "Validate": {
+    "validateTitle": "ESTA PÁGINA FUNCIONA CON AUTH",
+    "scanWithQR": "Escanear usando código QR",
+    "scanWithDevice": "Escanear usando un dispositivo lector",
+    "scanWithDeviceTitle": "Utiliza el lector para escanear el QR"
+  },
+  "QrScanner": {
+    "loadingCamera": "Inicializando la cámara",
+    "close": "Cerrar"
+  },
+  "ConfirmationFailedScreen": {
+    "failedTitle": "Rechazado",
+    "failedMessage": "El ticket fue rechazado"
+  },
+  "ConfirmationPassedScreen": {
+    "successTitle": "Aceptado",
+    "successMessage": "El ticket fue aceptado"
+  }
+}
