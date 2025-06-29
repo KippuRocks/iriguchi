@@ -87,31 +87,41 @@ export default function Validate() {
       }}
     >
       <h1>{t("validateTitle")}</h1>
-      <Box display="flex" flexWrap="wrap" gap={4}>
+      <Box
+        sx={{
+          flex: { md: "wrap", xs: "nowrap" },
+        }}
+        display="flex"
+        gap={4}
+      >
         <Card
           sx={{
             width: {
-              md: 320,
+              md: 180,
               xs: "100%",
             },
             display: "flex",
-            flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
           }}
         >
           <CardActionArea
-            sx={{ display: "flex", padding: 2, height: "100%" }}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              padding: 1,
+              height: "100%",
+            }}
             onClick={() => {
               setIsReaderOpened(true);
             }}
           >
-            <QrCodeIcon sx={{ height: 40, width: 40 }} />
+            <QrCodeIcon sx={{ height: 64, width: 64 }} />
             <CardContent>
               <Typography
                 variant="h6"
                 align="center"
-                sx={{ fontSize: "14px", opacity: 0.85 }}
+                sx={{ fontSize: "12px", opacity: 0.85 }}
               >
                 {t("scanWithCamera")}
               </Typography>
@@ -121,25 +131,29 @@ export default function Validate() {
         <Card
           sx={{
             width: {
-              md: 320,
+              md: 180,
               xs: "100%",
             },
             display: "flex",
-            flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
           }}
         >
           <CardActionArea
-            sx={{ display: "flex", padding: 2, height: "100%" }}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              padding: 1,
+              height: "100%",
+            }}
             onClick={() => setIsBarcodeOpened(true)}
           >
-            <UsbIcon sx={{ height: 40, width: 40 }} />
+            <UsbIcon sx={{ height: 64, width: 64 }} />
             <CardContent>
               <Typography
                 variant="h6"
                 align="center"
-                sx={{ fontSize: "14px", opacity: 0.85 }}
+                sx={{ fontSize: "12px", opacity: 0.85 }}
               >
                 {t("scanWithReader.title")}
               </Typography>
