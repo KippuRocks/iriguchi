@@ -1,7 +1,9 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { NextIntlClientProvider } from "next-intl";
+
+import { Geist, Geist_Mono } from "next/font/google";
 import { getLocale, getMessages } from "next-intl/server";
+
+import { NextIntlClientProvider } from "next-intl";
 import Theme from "./providers/Theme";
 
 const geistSans = Geist({
@@ -20,7 +22,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
-
   const messages = await getMessages();
 
   return (

@@ -3,8 +3,10 @@
     "validateTitle": "Access Validation",
     "scanWithQR": "Scan using QR",
     "scanWithCamera": "Use the camera",
-    "scanWithReader": "Use a reader device",
-    "scanWithReader.description": "Use the reader device to scan a QR"
+    "scanWithReader": {
+      "title": "Use a reader device",
+      "description": "Use the reader device to scan a QR"
+    }
   },
   "QrScanner": {
     "loadingCamera": "Starting camera",
