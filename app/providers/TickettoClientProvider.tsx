@@ -1,8 +1,8 @@
 "use client";
 
 import "reflect-metadata";
-import { createContext, ReactNode, useEffect, useState } from "react";
 
+import { ReactNode, createContext, useEffect, useState } from "react";
 import { TickettoClient, TickettoClientBuilder } from "@ticketto/protocol";
 
 export const TickettoClientContext = createContext<TickettoClient | null>(null);

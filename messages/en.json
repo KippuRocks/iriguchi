@@ -1,0 +1,21 @@
+{
+  "Validate": {
+    "validateTitle": "Access Validation",
+    "scanWithQR": "Scan using QR",
+    "scanWithCamera": "Use the camera",
+    "scanWithReader": "Use a reader device",
+    "scanWithReader.description": "Use the reader device to scan a QR"
+  },
+  "QrScanner": {
+    "loadingCamera": "Starting camera",
+    "close": "Close"
+  },
+  "ConfirmationFailedScreen": {
+    "failedTitle": "Rejected",
+    "failedMessage": "The ticket has been rejected"
+  },
+  "ConfirmationPassedScreen": {
+    "successTitle": "Approved",
+    "successMessage": "The ticket has been approved"
+  }
+}
