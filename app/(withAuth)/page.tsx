@@ -1,21 +1,22 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { useCallback, useContext, useEffect, useState } from "react";
 import {
+  Box,
   Card,
   CardActionArea,
   CardContent,
   Typography,
-  Box,
 } from "@mui/material";
-import QrCodeIcon from "@mui/icons-material/QrCode";
-import UsbIcon from "@mui/icons-material/Usb";
-import QrScanner from "@/app/_components/QRScanner";
+import { useCallback, useContext, useEffect, useState } from "react";
+
 import BarcodeReader from "@/app/_components/BarcodeReader";
-import { ConfirmationPassedScreen } from "@/app/_components/ConfirmationPassedScreen";
 import ConfirmationFailedScreen from "@/app/_components/ConfirmationFailedScreen";
+import { ConfirmationPassedScreen } from "@/app/_components/ConfirmationPassedScreen";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import QrScanner from "@/app/_components/QRScanner";
 import { TickettoClientContext } from "@/app/providers/TickettoClientProvider";
+import UsbIcon from "@mui/icons-material/Usb";
+import { useTranslations } from "next-intl";
 
 export default function Validate() {
   const t = useTranslations<string>("Validate");
@@ -27,7 +28,7 @@ export default function Validate() {
   const validateCode = useCallback(
     async (input: Uint8Array) => {
       try {
-        await client?.attendances.calls.submit(input);
+        await client?.tickets.calls.submitAttendanceCall(input);
         setIsSuccessOpened(true);
         const context = new AudioContext();
         const oscillator = context.createOscillator();
