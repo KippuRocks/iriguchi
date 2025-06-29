@@ -113,7 +113,7 @@ export default function Validate() {
                 align="center"
                 sx={{ fontSize: "14px", opacity: 0.85 }}
               >
-                {t("scanWithQR")}
+                {t("scanWithCamera")}
               </Typography>
             </CardContent>
           </CardActionArea>
@@ -141,7 +141,7 @@ export default function Validate() {
                 align="center"
                 sx={{ fontSize: "14px", opacity: 0.85 }}
               >
-                {t("scanWithDevice")}
+                {t("scanWithReader.title")}
               </Typography>
             </CardContent>
           </CardActionArea>
@@ -149,7 +149,7 @@ export default function Validate() {
       </Box>
       {isBarcodeOpened && (
         <BarcodeReader
-          message={t("scanWithDeviceTitle")}
+          message={t("scanWithReader.description")}
           onBarcode={(res) => {
             validateCode(res);
           }}

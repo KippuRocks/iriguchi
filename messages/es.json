@@ -1,9 +1,12 @@
 {
   "Validate": {
-    "validateTitle": "ESTA PÁGINA FUNCIONA CON AUTH",
+    "validateTitle": "Validación de Acceso",
     "scanWithQR": "Escanear usando código QR",
-    "scanWithDevice": "Escanear usando un dispositivo lector",
-    "scanWithDeviceTitle": "Utiliza el lector para escanear el QR"
+    "scanWithCamera": "Utiliza la cámara",
+    "scanWithReader": {
+      "title": "Utiliza un dispositivo de lectura",
+      "description": "Usa el dispositivo de lectura para escanear un QR"
+    }
   },
   "QrScanner": {
     "loadingCamera": "Inicializando la cámara",
