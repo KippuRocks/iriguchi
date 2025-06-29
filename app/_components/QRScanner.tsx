@@ -1,8 +1,9 @@
 "use client";
 
+import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import { Box, Typography, CircularProgress, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslations } from "next-intl";
 
@@ -32,7 +33,7 @@ export default function QrScanner({
       window.addEventListener("stopVideo", removeListeners);
       shouldStop = false;
       await navigator.permissions.query({
-        name: "camera",
+        name: "camera" as PermissionName,
       });
       //const media = await navigator.mediaDevices.getUserMedia({ video: true });
 
