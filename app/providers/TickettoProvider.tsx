@@ -21,7 +21,11 @@ export function TickettoProvider({
     .withConsumer(KippuPAPIConsumer)
     .withConfig({
       consumerSettings: {
-        apiEndpoint: process.env.NEXT_PUBLIC_KIPPU_API,
+        api: {
+          endpoint: process.env.NEXT_PUBLIC_KIPPU_API_ENDPOINT,
+          clientId: process.env.NEXT_PUBLIC_KIPPU_API_CLIENT_ID,
+          clientSecret: process.env.NEXT_PUBLIC_KIPPU_API_CLIENT_SECRET,
+        },
         client: createClient(
           getWsProvider(
             process.env.NEXT_PUBLIC_CHAIN_ENDPOINT ?? "wss://kreivo.kippu.rocks"
