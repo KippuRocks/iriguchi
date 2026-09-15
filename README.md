@@ -178,6 +178,20 @@ Without a network connection (as the platform reports it, `@react-native-communi
 the scan screen blocks: "No connection — cannot admit". It scans nothing and
 queues nothing (`REQ-CL-3`).
 
+## System tests
+
+`test/system/` runs the gate against the real services: the ledger service
+(`ticketto-offchain`), the sponsor relay, and kippu-api in its `staging` wiring over
+that ledger. An organiser signs up and issues a granted ticket, a holder registers a
+simulated passkey, and operator devices redeem enrolment codes — test fixtures, not
+Iriguchi's — then Iriguchi's own verdict, submission and reports run as in the app:
+`AC-E1.2`, `AC-E1.3`, `AC-E5.2`, `AC-E3.1`, `AC-E3.3`, and the two-device scenario of
+`AC-E3.4`, which ends on the organiser's flag in `derived.admissionFlags.list`. The
+ledger service is private, so the tests are skipped unless
+`IRIGUCHI_TEST_LEDGER_URL`, `IRIGUCHI_TEST_SPONSOR_URL` and `IRIGUCHI_TEST_KIPPU_API_URL`
+are set (`IRIGUCHI_TEST_RP_ID`, default `kippu.example`, is the stack's holder RP id);
+kippu-e2e (`F-070`) runs them against its stack.
+
 ## Device tests
 
 Flows in `.maestro/` run with [Maestro](https://maestro.mobile.dev) against an
