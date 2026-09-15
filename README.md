@@ -143,6 +143,26 @@ over `ledger-rules` (`backend-memory`), Saifu-kind holder passkeys (F-003's
 simulated authenticator), and the real tRPC client to the kippu-api stand-in.
 Against the ledger service and kippu-api themselves, the journeys are kippu-e2e's.
 
+## Admit, then submit
+
+An admission shows at once. The pass is then submitted to the ledger in the
+background, directly through the SDK and sponsored through Kippu's relay
+(`@kippu/sponsorship`'s `createRelaySponsor`), with the time it was presented at
+the gate (`src/admission/admissions.ts`, `F-050` plan §5.2). The queue never waits
+on it (`NFR-2`); submissions keep the binding's full retry budget.
+
+When the submission has ended, the admission is reported to kippu-api
+(`operators.reportAdmission`) with the exact `presentedAt` submitted, the device's
+unadjusted clock, and how the submission ended: settled with its receipt's
+cursor, rejected with the ledger's code, or failed. A ledger refusal after an
+admission becomes a flag to the organiser (`REQ-OP-3`), not a message at the gate.
+Reports are retried with the same report id until kippu-api records them or
+refuses them for good, for up to 24 hours. Each report keeps the session token
+its admission was made under: kippu-api accepts reports of passes presented
+before a session ended for 24 hours after, so signing out loses none. Only
+admissions are submitted and reported; nothing is admitted without a verdict
+obtained online, so nothing is queued (`REQ-CL-3`).
+
 ## Device tests
 
 Flows in `.maestro/` run with [Maestro](https://maestro.mobile.dev) against an

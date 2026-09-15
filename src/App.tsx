@@ -1,4 +1,4 @@
-import type { EventId } from "@ticketto/sdk";
+import type { EventId, SignedAccessPass } from "@ticketto/sdk";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -49,6 +49,16 @@ export function App() {
     return outcome;
   }, [services, session]);
   const verdictDeps = useCallback(() => services.verdict(session), [services, session]);
+  const admit = useCallback(
+    (pass: SignedAccessPass, presentedAt: number) => {
+      const params = router.location.params;
+      if (session === null || params.event === undefined || params.gate === undefined) return;
+      services.admissions
+        .admit({ event: params.event, gate: params.gate, pass, presentedAt, token: session.token })
+        .catch(() => {});
+    },
+    [services, session, router.location.params],
+  );
   const signedOut = useCallback(() => {
     services.store.clear().catch(() => {});
     setSession(null);
@@ -74,6 +84,8 @@ export function App() {
           eventName={chosen?.eventName ?? null}
           gate={router.location.params.gate}
           router={router}
+          now={Date.now}
+          onAdmit={admit}
           onSignedOut={signedOut}
           verdictDeps={verdictDeps}
         />

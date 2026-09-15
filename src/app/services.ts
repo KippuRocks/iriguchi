@@ -1,9 +1,11 @@
 // The operator services the app's screens use: the build's configuration
 // (app.config.ts), the device's secure storage, kippu-api, and the ledger.
 
-import type { Result, Ticketto } from "@ticketto/sdk";
+import { createSubmission, type Result, type Ticketto } from "@ticketto/sdk";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
+import { type Admissions, createAdmissions, randomUuid } from "../admission/admissions.ts";
+import { reportAdmission } from "../admission/report.ts";
 import { kippuClient } from "../kippu/client.ts";
 import { connectLedger, GATE_READ_RETRY } from "../ledger/ticketto.ts";
 import { checkOperator } from "../operator/check.ts";
@@ -53,6 +55,8 @@ export interface OperatorServices {
   api(session: OperatorSessionRecord | null): OperatorApi;
   /** What a verdict needs, as the operator of `session`, now. */
   verdict(session: OperatorSessionRecord | null): VerdictDeps;
+  /** Background submission and reporting of admissions (T-050-06). */
+  readonly admissions: Admissions;
 }
 
 const LEDGER_UNAVAILABLE = {
@@ -81,7 +85,39 @@ export function operatorServices(config: BuildConfig = buildConfig()): OperatorS
       );
     };
 
+  // Submissions run in the background with the binding's full retry budget (NFR-2),
+  // over their own connection.
+  let submitting: Promise<Result<Ticketto>> | null = null;
+  const submissionLedger = () => {
+    submitting ??= connectLedger(config).catch(() => LEDGER_UNAVAILABLE);
+    return submitting.then((connected) => {
+      if (!connected.ok) submitting = null;
+      return connected;
+    });
+  };
+  const admissions = createAdmissions({
+    submit: (pass, presentedAt) => {
+      const controller = createSubmission();
+      submissionLedger()
+        .then(async (connected) => {
+          if (!connected.ok) {
+            controller.rejected(connected.error);
+            return;
+          }
+          const result = await connected.value.submitAccessPass(pass, { presentedAt });
+          if (result.ok) controller.settled(result.value);
+          else controller.rejected(result.error);
+        })
+        .catch((reason: unknown) => controller.failed(reason));
+      return controller.submission;
+    },
+    report: reportAdmission(config.kippuApiUrl),
+    deviceClock: () => Date.now(),
+    reportId: randomUuid,
+  });
+
   return {
+    admissions,
     store: secureSessionStore(SecureStore),
     api: (session) =>
       operatorApi(kippuClient({ url: config.kippuApiUrl, token: () => session?.token })),
