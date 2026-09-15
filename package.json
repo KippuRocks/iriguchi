@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@kippu/sponsorship": "file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "12.0.1",
     "@ticketto/binding-offchain": "file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz",
     "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz",

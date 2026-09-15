@@ -23,6 +23,11 @@ export function App() {
   const [session, setSession] = useState<OperatorSessionRecord | null>(null);
   const [chosen, setChosen] = useState<GateChoice | null>(null);
 
+  // Reports a previous run left pending are sent now, once each (T-050-11).
+  useEffect(() => {
+    services.admissions.resume().catch(() => {});
+  }, [services]);
+
   // The operator's session on the device decides where the app starts.
   useEffect(() => {
     if (screen !== "app.starting") return;

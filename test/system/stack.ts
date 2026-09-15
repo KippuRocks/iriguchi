@@ -12,11 +12,13 @@
 // and IRIGUCHI_TEST_ORGANISER_ORIGIN (default http://localhost:5173) one of its login
 // origins.
 
+import type { AdmissionReportInput } from "@kippu/api";
 import { producePass } from "@ticketto/profile-v0";
 import { simulatedWebAuthnSigner } from "@ticketto/profile-v0/testing";
 import type { AttendancePolicy, EventId, TicketId } from "@ticketto/sdk";
 import { createAdmissions, randomUuid } from "../../src/admission/admissions.ts";
 import { reportAdmission } from "../../src/admission/report.ts";
+import type { ReportStore } from "../../src/admission/report-store.ts";
 import { createServerClock, timed } from "../../src/clock/server-clock.ts";
 import { kippuClient } from "../../src/kippu/client.ts";
 import { connectLedger, GATE_READ_RETRY } from "../../src/ledger/ticketto.ts";
@@ -129,6 +131,12 @@ export async function operatorDevices(
   event: EventId,
   gates: readonly string[],
   devices: number,
+  options: {
+    /** Where the devices keep pending reports. */
+    readonly store?: ReportStore;
+    /** Reports never reach kippu-api, as in an app killed before they do. */
+    readonly neverReport?: boolean;
+  } = {},
 ) {
   const operator = await api.operators.create.mutate({ name: "Gate staff" });
   await api.operators.grants.create.mutate({
@@ -166,17 +174,39 @@ export async function operatorDevices(
         verdict,
         admissions: createAdmissions({
           submit: (pass, presentedAt) => writeLedger.submitAccessPass(pass, { presentedAt }),
-          report: (input, token) =>
-            timed(
-              clock,
-              () => report(input, token),
-              (r) => r.receivedAt,
-            ),
+          report: options.neverReport
+            ? () => new Promise<never>(() => {})
+            : (input, token) =>
+                timed(
+                  clock,
+                  () => report(input, token),
+                  (r) => r.receivedAt,
+                ),
           deviceClock: clock.deviceNow,
           reportId: randomUuid,
+          ...(options.store === undefined ? {} : { store: options.store }),
         }),
         ledger: readLedger,
       };
     }),
   );
+}
+
+/** The admissions of an app started again on a device whose pending reports are `store`. */
+export function restartedAdmissions(store: ReportStore) {
+  const sent: AdmissionReportInput[] = [];
+  const report = reportAdmission(stack.kippuUrl);
+  const admissions = createAdmissions({
+    submit: () => {
+      throw new Error("a restarted app submits nothing again");
+    },
+    report: (input, token) => {
+      sent.push(input);
+      return report(input, token);
+    },
+    deviceClock: () => Date.now(),
+    reportId: randomUuid,
+    store,
+  });
+  return Object.assign(admissions, { sent });
 }
