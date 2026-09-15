@@ -1,0 +1,162 @@
+diff --git a/android/src/main/java/expo/modules/camera/ExpoCameraView.kt b/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
+index 999a22c6a679042e144acb6caa764c9929103966..1d943faaa0d8f3023160898c81934a6cbda1aa1b 100644
+--- a/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
++++ b/android/src/main/java/expo/modules/camera/ExpoCameraView.kt
+@@ -810,6 +810,7 @@ class ExpoCameraView(
+           target = id,
+           data = barcode.value.toString(),
+           raw = barcode.raw.toString(),
++          rawBytes = barcode.rawBytes,
+           type = BarcodeType.mapFormatToString(barcode.type),
+           cornerPoints = cornerPoints,
+           bounds = boundingBox,
+diff --git a/android/src/main/java/expo/modules/camera/analyzers/BarcodeAnalyzer.kt b/android/src/main/java/expo/modules/camera/analyzers/BarcodeAnalyzer.kt
+index 00a70f6558042febdb4d2fe19001c403bfbff174..8d5ab361e4df8b0fba407546f4fbe370e5df3d98 100644
+--- a/android/src/main/java/expo/modules/camera/analyzers/BarcodeAnalyzer.kt
++++ b/android/src/main/java/expo/modules/camera/analyzers/BarcodeAnalyzer.kt
+@@ -1,5 +1,6 @@
+ package expo.modules.camera.analyzers
+ 
++import android.util.Base64
+ import android.util.Log
+ import androidx.annotation.OptIn
+ import androidx.camera.core.ExperimentalGetImage
+@@ -66,7 +67,8 @@ class BarcodeAnalyzer(formats: List<BarcodeType>, val onComplete: (BarCodeScanne
+               extra,
+               cornerPoints,
+               effectiveHeight,
+-              effectiveWidth
++              effectiveWidth,
++              barcode.rawBytes?.let { Base64.encodeToString(it, Base64.NO_WRAP) }
+             )
+           )
+         }
+diff --git a/android/src/main/java/expo/modules/camera/analyzers/BarcodeScannerResultSerializer.kt b/android/src/main/java/expo/modules/camera/analyzers/BarcodeScannerResultSerializer.kt
+index 119454d5b7db4b9eefbdb51b87e57cb3faf8e942..11b964a113968bbef42b1aad3642cf04088d4e46 100644
+--- a/android/src/main/java/expo/modules/camera/analyzers/BarcodeScannerResultSerializer.kt
++++ b/android/src/main/java/expo/modules/camera/analyzers/BarcodeScannerResultSerializer.kt
+@@ -1,6 +1,7 @@
+ package expo.modules.camera.analyzers
+ 
+ import android.os.Bundle
++import android.util.Base64
+ import android.util.Pair
+ import com.google.mlkit.vision.barcode.common.Barcode
+ import com.google.mlkit.vision.common.InputImage
+@@ -11,6 +12,7 @@ object BarCodeScannerResultSerializer {
+     Bundle().apply {
+       putString("data", result.value)
+       putString("raw", result.raw)
++      putString("rawBytes", result.rawBytes)
+       putInt("type", result.type)
+       putBundle("extra", result.extra)
+       val cornerPointsAndBoundingBox = getCornerPointsAndBoundingBox(result.cornerPoints, result.boundingBox, density)
+@@ -33,7 +35,8 @@ object BarCodeScannerResultSerializer {
+     }
+ 
+     val extra = parseExtraDate(barcode)
+-    return BarCodeScannerResult(barcode.format, value, raw, extra, cornerPoints, inputImage?.height ?: 0, inputImage?.width ?: 0)
++    val rawBytes = barcode.rawBytes?.let { Base64.encodeToString(it, Base64.NO_WRAP) }
++    return BarCodeScannerResult(barcode.format, value, raw, extra, cornerPoints, inputImage?.height ?: 0, inputImage?.width ?: 0, rawBytes)
+   }
+ 
+   private fun getCornerPointsAndBoundingBox(
+diff --git a/android/src/main/java/expo/modules/camera/common/CommonEvents.kt b/android/src/main/java/expo/modules/camera/common/CommonEvents.kt
+index f31d5136e3870612d7e9c30d7c86ecaa70e4064d..896bbe77262e4369d37c92ed12cdca25f6ccb429 100644
+--- a/android/src/main/java/expo/modules/camera/common/CommonEvents.kt
++++ b/android/src/main/java/expo/modules/camera/common/CommonEvents.kt
+@@ -10,6 +10,7 @@ class BarcodeScannedEvent(
+   @Field val target: Int,
+   @Field val data: String,
+   @Field val raw: String,
++  @Field val rawBytes: String?,
+   @Field val type: String,
+   @Field val cornerPoints: ArrayList<Bundle>,
+   @Field val bounds: Bundle,
+diff --git a/android/src/main/java/expo/modules/camera/utils/BarCodeScannerResult.kt b/android/src/main/java/expo/modules/camera/utils/BarCodeScannerResult.kt
+index 05a5cbf539a094feabb76e43a669097c224256ed..46a565d3f7b08cd0dff74ef5e6a92f680a2e32e2 100644
+--- a/android/src/main/java/expo/modules/camera/utils/BarCodeScannerResult.kt
++++ b/android/src/main/java/expo/modules/camera/utils/BarCodeScannerResult.kt
+@@ -9,7 +9,9 @@ class BarCodeScannerResult(
+   val extra: Bundle,
+   var cornerPoints: MutableList<Int>,
+   var height: Int,
+-  var width: Int
++  var width: Int,
++  // Iriguchi: the symbol's decoded data codewords, base64, for binary payloads.
++  val rawBytes: String? = null
+ ) {
+   data class BoundingBox(val x: Int, val y: Int, val width: Int, val height: Int)
+ 
+diff --git a/build/Camera.types.d.ts b/build/Camera.types.d.ts
+index 0ee50ec0d2705ef233c5ccbcfa098e92d91446bb..038435f774b7b8fb0704d9f1e26c9afd668f9c1a 100644
+--- a/build/Camera.types.d.ts
++++ b/build/Camera.types.d.ts
+@@ -282,6 +282,11 @@ export type BarcodeScanningResult = {
+      * @hidden
+      */
+     raw?: string;
++    /**
++     * Iriguchi: the QR symbol's decoded data codewords — mode indicators, lengths and
++     * padding included — as base64, so a binary payload survives intact.
++     */
++    rawBytes?: string;
+     /**
+      * Corner points of the bounding box.
+      * `cornerPoints` is not always available and may be empty. On iOS, for `code39` and `pdf417`
+diff --git a/ios/Common/BarcodeUtils.swift b/ios/Common/BarcodeUtils.swift
+index 0483da9c391344f693088ad123976fdc1c2a574f..244c8b3c919c1085a4e181d2f7295afa2bef822e 100644
+--- a/ios/Common/BarcodeUtils.swift
++++ b/ios/Common/BarcodeUtils.swift
+@@ -1,4 +1,5 @@
+ import AVFoundation
++import CoreImage
+ 
+ struct BarcodeUtils {
+   static func getResultFrom(_ features: [CIFeature]) -> [[AnyHashable: Any]?] {
+@@ -20,6 +21,10 @@ struct BarcodeUtils {
+     var result: [String: Any] = [:]
+     result["type"] = "qr"
+     result["data"] = codeFeature.messageString
++    // Iriguchi: the symbol's decoded data codewords, base64, for binary payloads.
++    if let descriptor = codeFeature.symbolDescriptor {
++      result["rawBytes"] = descriptor.errorCorrectedPayload.base64EncodedString()
++    }
+ 
+     if !codeFeature.bounds.isEmpty {
+       result["cornerPoints"] = [
+diff --git a/ios/Current/BarcodeScannerUtils.swift b/ios/Current/BarcodeScannerUtils.swift
+index 23827cfcfd000446c0d4ebbf622de68eb11030f2..f3c953ee6d3746b89e44de7aee1d39acba9e62fd 100644
+--- a/ios/Current/BarcodeScannerUtils.swift
++++ b/ios/Current/BarcodeScannerUtils.swift
+@@ -1,4 +1,5 @@
+ import AVFoundation
++import CoreImage
+ import VisionKit
+ import Vision
+ 
+@@ -29,6 +30,10 @@ class BarcodeScannerUtils {
+     var result = [String: Any]()
+     result["type"] = BarcodeType.toBarcodeType(type: barcodeScannerResult.type).rawValue
+     result["data"] = barcodeScannerResult.stringValue
++    // Iriguchi: the symbol's decoded data codewords, base64, for binary payloads.
++    if let descriptor = barcodeScannerResult.descriptor as? CIQRCodeDescriptor {
++      result["rawBytes"] = descriptor.errorCorrectedPayload.base64EncodedString()
++    }
+ 
+     // iOS converts upc_a to ean13 and appends a leading 0
+     if barcodeScannerResult.type == AVMetadataObject.ObjectType.ean13 {
+diff --git a/ios/Current/MetaDataDelegate.swift b/ios/Current/MetaDataDelegate.swift
+index e8326ac038fa617c7732583ca2429bbde82bf6d7..92ea46066c3778ee5ce45098b0ac6707753b4f49 100644
+--- a/ios/Current/MetaDataDelegate.swift
++++ b/ios/Current/MetaDataDelegate.swift
+@@ -51,7 +51,8 @@ class MetaDataDelegate: NSObject, AVCaptureMetadataOutputObjectsDelegate, AVCapt
+         }
+ 
+         if let codeMetadata {
+-          if codeMetadata.stringValue != nil && codeMetadata.type == barcodeType {
++          // Iriguchi: a binary QR payload may have no string value; its descriptor carries it.
++          if (codeMetadata.stringValue != nil || codeMetadata.descriptor is CIQRCodeDescriptor) && codeMetadata.type == barcodeType {
+             self.responseHandler.onScanningResult(BarcodeScannerUtils.avMetadataCodeObjectToDictionary(codeMetadata))
+           }
+         }

@@ -29,9 +29,29 @@ name: Development build smoke test
     id: "iriguchi-root"
 - assertVisible: "Iriguchi"
 # T-050-10: the screen carries its screenId, and marks itself settled.
-- assertVisible:
-    id: "app.starting"
 - extendedWaitUntil:
     visible:
-      id: "app.starting.settled"
+      id: "gate.scan.settled"
     timeout: 30000
+- assertVisible:
+    id: "gate.scan"
+# T-050-03: a Saifu pass's QR code (test/fixtures/saifu-pass.png), read by the
+# platform's own QR decoder — Core Image on iOS, ML Kit on Android — decodes to
+# the pass it carries. Simulators have no camera, so the scan fixture stands in
+# for it (src/scan/fixture.ts); the reading path after the decoder is the camera's.
+- tapOn:
+    id: "scan-fixture"
+- extendedWaitUntil:
+    visible:
+      id: "pass-read"
+    timeout: 30000
+- assertVisible:
+    id: "pass-ticket"
+    text: "7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e"
+- assertVisible:
+    id: "pass-holder"
+    text: "03867551a0096eb0f865cb69e83ef876d6c4947677048aebab2ec5d856cd1c29"
+- tapOn:
+    id: "scan-next"
+- assertVisible:
+    id: "scan-fixture"

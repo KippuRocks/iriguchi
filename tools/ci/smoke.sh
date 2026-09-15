@@ -18,7 +18,9 @@ port=8081
 app_id=$(node -p 'const e = require("./app.json").expo; process.argv[1] === "ios" ? e.ios.bundleIdentifier : e.android.package' "$platform")
 scheme=$(node -p 'require("./app.json").expo.scheme')
 
-CI=1 pnpm exec expo start --dev-client --port "$port" >"$results/metro.log" 2>&1 &
+# T-050-03: the bundle offers the scan fixture (src/scan/fixture.ts), since
+# simulators and emulators have no camera to point at a pass.
+CI=1 EXPO_PUBLIC_IRIGUCHI_SCAN_FIXTURE=1 pnpm exec expo start --dev-client --port "$port" >"$results/metro.log" 2>&1 &
 metro=$!
 trap 'kill "$metro" 2>/dev/null || true' EXIT
 
@@ -43,6 +45,13 @@ curl -fsS -o /dev/null --max-time 900 "http://localhost:$port/$bundle" || true
 
 if [[ "$platform" == android ]]; then
   adb reverse "tcp:$port" "tcp:$port"
+fi
+
+# The camera permission is granted up front, as an operator grants it once.
+if [[ "$platform" == android ]]; then
+  adb shell pm grant "$app_id" android.permission.CAMERA
+else
+  xcrun simctl privacy booted grant camera "$app_id"
 fi
 
 url="http://localhost:$port"
