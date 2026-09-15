@@ -1,7 +1,8 @@
 // node tools/ci/kippu-api-stand-in.ts — serves test/kippu-api-stand-in.ts on
 // 127.0.0.1:8080 for the device smoke flow: enrolment code GATE-ENROL-TEST opens a
 // session whose operator holds a grant of gate North at the Smoke Test Night event,
-// for the next 24 hours.
+// for the next 24 hours. Its clock runs 30 s behind the device's (T-050-07), so the
+// scan screen shows the clock drift warning.
 
 import { startKippuStandIn } from "../../test/kippu-api-stand-in.ts";
 
@@ -25,5 +26,6 @@ const standIn = await startKippuStandIn({
     },
   ],
   eventNames: { [SMOKE_EVENT]: "Smoke Test Night" },
+  now: () => Date.now() - 30_000,
 });
 console.log(`kippu-api stand-in on ${standIn.url}`);

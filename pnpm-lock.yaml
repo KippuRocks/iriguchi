@@ -24,6 +24,9 @@ importers:
       '@kippu/sponsorship':
         specifier: file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz
         version: file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz(@ticketto/profile-v0@file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz)(@ticketto/sdk@file:vendor/libticketto/ticketto-sdk-0.0.0.tgz)
+      '@react-native-community/netinfo':
+        specifier: 12.0.1
+        version: 12.0.1(react-native@0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)
       '@ticketto/binding-offchain':
         specifier: file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz
         version: file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz
@@ -849,6 +852,12 @@ packages:
 
   '@oxc-project/types@0.149.0':
     resolution: {integrity: sha512-Efcc+iF0j3Bf67YjEqIqWXbX5XddXoK/Mw4K1/JuXwRCZ8N16VR7iT23nlCc9XrveFVh/E5Rqs2StT0V8v9LdA==}
+
+  '@react-native-community/netinfo@12.0.1':
+    resolution: {integrity: sha512-P/3caXIvfYSJG8AWJVefukg+ZGRPs+M4Lp3pNJtgcTYoJxCjWrKQGNnCkj/Cz//zWa/avGed0i/wzm0T8vV2IQ==}
+    peerDependencies:
+      react: '*'
+      react-native: '>=0.59'
 
   '@react-native/assets-registry@0.86.3':
     resolution: {integrity: sha512-TDhgCZA4wjJg84d5A9swiOQYPIWSKEEVdg9IwMFZDupQzW/F3QoLUrfAJOcalgqTDA9/buTB8awhE3Whwg6u9Q==}
@@ -3904,6 +3913,11 @@ snapshots:
     optional: true
 
   '@oxc-project/types@0.149.0': {}
+
+  '@react-native-community/netinfo@12.0.1(react-native@0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)':
+    dependencies:
+      react: 19.2.3
+      react-native: 0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3)
 
   '@react-native/assets-registry@0.86.3': {}
 

@@ -1,11 +1,14 @@
+import { useNetInfo } from "@react-native-community/netinfo";
 import type { EventId, SignedAccessPass } from "@ticketto/sdk";
 import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import type { ServerClock } from "../clock/server-clock.ts";
 import { refusalCopy } from "../copy/refusals.ts";
 import { SCAN_FIXTURE_ENABLED, scanFixture } from "../scan/fixture.ts";
 import { readScannedPass, type ScannedCode } from "../scan/read-pass.ts";
 import { decide, type Verdict, type VerdictDeps } from "../verdict/verdict.ts";
+import { ClockDriftWarning, NoConnection, useClockDrift } from "./GateStatus.tsx";
 import type { Router } from "./router.ts";
 import { Screen } from "./Screen.tsx";
 
@@ -30,8 +33,8 @@ export interface ScanProps {
   readonly onSignedOut: () => void;
   /** Submits an admitted pass in the background and reports it (T-050-06). */
   readonly onAdmit: (pass: SignedAccessPass, presentedAt: number) => void;
-  /** The presentation time of a pass scanned now. */
-  readonly now: () => number;
+  /** The device's clock against Kippu's: presentation times are server-adjusted (T-050-07). */
+  readonly clock: ServerClock;
 }
 
 /**
@@ -47,8 +50,12 @@ export function Scan({
   verdictDeps,
   onSignedOut,
   onAdmit,
-  now,
+  clock,
 }: ScanProps) {
+  const network = useNetInfo();
+  // Offline is only what the platform reports; an unknown state is not treated as offline.
+  const offline = network.isConnected === false;
+  const drift = useClockDrift(clock);
   const [permission, requestPermission] = useCameraPermissions();
   const [reading, setReading] = useState<Reading>({ kind: "scanning" });
   const [busy, setBusy] = useState(false);
@@ -60,8 +67,11 @@ export function Scan({
         setReading({ kind: "unreadable" });
         return;
       }
-      // The moment the pass was presented: submitted, and reported, exactly as taken.
-      const presentedAt = now();
+      // No verdict can be obtained without a connection, so none is sought (REQ-CL-3).
+      if (offline) return;
+      // The moment the pass was presented, on Kippu's clock: submitted, and reported,
+      // exactly as taken (T-050-07).
+      const presentedAt = clock.now();
       setReading({ kind: "checking", pass: pass.value });
       decide(verdictDeps(), { event, gate }, pass.value)
         .catch((): Verdict => ({ kind: "unavailable", pass: pass.value, unreachable: "both" }))
@@ -71,13 +81,20 @@ export function Scan({
           setReading({ kind: "verdict", verdict });
         });
     },
-    [verdictDeps, event, gate, onAdmit, now],
+    [verdictDeps, event, gate, onAdmit, clock, offline],
   );
 
   const onBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => read({ rawBytes: result.rawBytes }),
     [read],
   );
+
+  // Kippu's clock is compared on opening the gate, before the first pass (T-050-07).
+  useEffect(() => {
+    verdictDeps()
+      .checkOperator({ event, gate })
+      .catch(() => {});
+  }, [verdictDeps, event, gate]);
 
   const scanTestPass = useCallback(async () => {
     setBusy(true);
@@ -108,8 +125,11 @@ export function Scan({
             <Text style={styles.link}>Change gate</Text>
           </Pressable>
         </View>
+        {drift !== null ? <ClockDriftWarning drift={drift} /> : null}
         <Text style={styles.heading}>Scan a pass</Text>
-        {permission?.granted ? (
+        {offline ? (
+          <NoConnection />
+        ) : permission?.granted ? (
           <View style={styles.camera}>
             {reading.kind === "scanning" ? (
               <CameraView
@@ -175,7 +195,7 @@ export function Scan({
           </Pressable>
         ) : null}
 
-        {SCAN_FIXTURE_ENABLED && reading.kind === "scanning" ? (
+        {SCAN_FIXTURE_ENABLED && !offline && reading.kind === "scanning" ? (
           <Pressable
             accessibilityRole="button"
             disabled={busy}

@@ -47,7 +47,7 @@ interface Node {
 }
 
 /** Modules under src/screens/ that are parts of screens, or the router itself, not screens. */
-export const NOT_SCREENS = new Set(["Screen.tsx", "router.ts", "registry.ts"]);
+export const NOT_SCREENS = new Set(["Screen.tsx", "GateStatus.tsx", "router.ts", "registry.ts"]);
 
 const DECLARING_CALLS = new Set(["navigate"]);
 const ROUTER_MODULE = "src/screens/router.ts";
