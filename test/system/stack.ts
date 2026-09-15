@@ -12,7 +12,7 @@
 // and IRIGUCHI_TEST_ORGANISER_ORIGIN (default http://localhost:5173) one of its login
 // origins.
 
-import type { AdmissionReportInput } from "@kippu/api";
+import type { AdmissionReportInput } from "@kippurocks/api";
 import { producePass } from "@ticketto/profile-v0";
 import { simulatedWebAuthnSigner } from "@ticketto/profile-v0/testing";
 import type { AttendancePolicy, EventId, TicketId } from "@ticketto/sdk";

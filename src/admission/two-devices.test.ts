@@ -5,7 +5,7 @@
 // (backend-memory) and the kippu-api stand-in; the flag itself, in Ibento's read,
 // is test/system/two-devices.system.test.ts against kippu-api.
 
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import { afterEach, describe, expect, it } from "vitest";
 import { gateLedger, RP_ID } from "../../test/gate-ledger.ts";
 import { type StandIn, startKippuStandIn } from "../../test/kippu-api-stand-in.ts";

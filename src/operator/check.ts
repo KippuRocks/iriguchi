@@ -2,7 +2,7 @@
 // (F-024 §5.2), run alongside the pass checks on every scan, never cached, so a
 // revoked grant or session refuses the next scan.
 
-import type { CheckRefusal } from "@kippu/api";
+import type { CheckRefusal } from "@kippurocks/api";
 import type { KippuClient } from "../kippu/client.ts";
 import { refusalOf } from "../kippu/errors.ts";
 import type { Gate, OperatorCheck } from "../verdict/verdict.ts";

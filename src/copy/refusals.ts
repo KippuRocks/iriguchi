@@ -8,7 +8,7 @@
 // pass is recorded, after an admission; the organiser is flagged (REQ-OP-3), and the
 // operator never sees it at the gate — its words are here for the day a gate does.
 
-import type { CheckRefusal } from "@kippu/api";
+import type { CheckRefusal } from "@kippurocks/api";
 import type { TickettoErrorCode } from "@ticketto/sdk";
 import type { Refusal } from "../verdict/verdict.ts";
 

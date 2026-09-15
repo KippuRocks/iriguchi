@@ -1,9 +1,9 @@
 // T-050-04 end to end in one process: Iriguchi's verdict over the Ticketto SDK and
 // `ledger-rules` (backend-memory), and over the real tRPC client to a kippu-api
-// stand-in typed by @kippu/api. The same flows against the ledger service and
+// stand-in typed by @kippurocks/api. The same flows against the ledger service and
 // kippu-api run in kippu-e2e (F-070).
 
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import { type EventId, LOG_START, type Ticketto } from "@ticketto/sdk";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type GateLedger, gateLedger, RP_ID } from "../../test/gate-ledger.ts";

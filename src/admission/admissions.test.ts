@@ -2,7 +2,7 @@
 // the SDK and ledger-rules (backend-memory) and the real tRPC client to the
 // kippu-api stand-in.
 
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import { createSubmission, type Receipt, type Submission } from "@ticketto/sdk";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { type GateLedger, gateLedger, RP_ID } from "../../test/gate-ledger.ts";

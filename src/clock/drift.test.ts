@@ -3,7 +3,7 @@
 // (backend-memory) and the real tRPC client to the kippu-api stand-in, whose clock
 // runs 30 s behind the device's.
 
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import { afterEach, describe, expect, it } from "vitest";
 import { gateLedger, RP_ID } from "../../test/gate-ledger.ts";
 import { type StandIn, startKippuStandIn } from "../../test/kippu-api-stand-in.ts";

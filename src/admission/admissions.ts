@@ -25,7 +25,7 @@
 // Nothing here queues an admission: an admission exists only once a verdict was
 // obtained online (REQ-CL-3). Only its report waits.
 
-import type { AdmissionReportInput, AdmissionSubmission } from "@kippu/api";
+import type { AdmissionReportInput, AdmissionSubmission } from "@kippurocks/api";
 import type { Receipt, SignedAccessPass, Submission, Timestamp } from "@ticketto/sdk";
 import { refusalOf } from "../kippu/errors.ts";
 import { memoryReportStore, type PendingReport, type ReportStore } from "./report-store.ts";

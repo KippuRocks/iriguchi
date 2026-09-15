@@ -5,8 +5,8 @@
 // tickets to holders whose passkeys are F-003's simulated authenticator: the
 // credential kind Saifu's holders use.
 
-import { issueSponsorship, kmsP256Signer } from "@kippu/sponsorship";
-import { softwareKmsP256Key } from "@kippu/sponsorship/testing";
+import { issueSponsorship, kmsP256Signer } from "@kippurocks/sponsorship";
+import { softwareKmsP256Key } from "@kippurocks/sponsorship/testing";
 import { createMemoryBackend } from "@ticketto/backend-memory";
 import { createProfileV0, producePass } from "@ticketto/profile-v0";
 import { simulatedWebAuthnSigner, softwareP256Signer } from "@ticketto/profile-v0/testing";

@@ -12,7 +12,7 @@
 // one item per report, never in app storage. Nothing here is personal data: event,
 // gate, ticket, pass id and holder account are ledger identifiers.
 
-import type { AdmissionSubmission } from "@kippu/api";
+import type { AdmissionSubmission } from "@kippurocks/api";
 
 /** A report waiting for kippu-api's acknowledgement. */
 export interface PendingReport {

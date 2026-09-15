@@ -80,7 +80,7 @@ Service endpoints are configuration, with placeholders until hostnames are chose
 | `IRIGUCHI_KIPPU_API_URL` | `https://api.kippu.example` |
 
 `test/kippu-api-stand-in.ts` serves kippu-api's operator procedures over tRPC's
-HTTP wire format, with responses typed by `@kippu/api`, so a contract change fails
+HTTP wire format, with responses typed by `@kippurocks/api`, so a contract change fails
 to compile. The unit tests drive the real tRPC client against it, and CI's smoke
 flow runs it (`tools/ci/kippu-api-stand-in.ts`) so the development build signs in,
 chooses a gate and reaches the scanner on both platforms. It is a stand-in, not
@@ -147,7 +147,7 @@ Against the ledger service and kippu-api themselves, the journeys are kippu-e2e'
 
 An admission shows at once. The pass is then submitted to the ledger in the
 background, directly through the SDK and sponsored through Kippu's relay
-(`@kippu/sponsorship`'s `createRelaySponsor`), with the time it was presented at
+(`@kippurocks/sponsorship`'s `createRelaySponsor`), with the time it was presented at
 the gate (`src/admission/admissions.ts`, `F-050` plan §5.2). The queue never waits
 on it (`NFR-2`); submissions keep the binding's full retry budget.
 
@@ -218,5 +218,5 @@ pinned commits, checked by `pnpm vendor:check` in CI:
 - `@ticketto/sdk`, `profile-v0` and `binding-offchain` — and `backend-memory`,
   `ledger-rules` and `log` for tests — from `libticketto`
   (`pnpm vendor:libticketto <commit>`);
-- `@kippu/api` (router types, `C5`) and `@kippu/sponsorship` (the relay client) from
+- `@kippurocks/api` (router types, `C5`) and `@kippurocks/sponsorship` (the relay client) from
   `kippu-api` (`pnpm vendor:kippu-api <commit>`).
