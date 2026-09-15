@@ -163,6 +163,17 @@ before a session ended for 24 hours after, so signing out loses none. Only
 admissions are submitted and reported; nothing is admitted without a verdict
 obtained online, so nothing is queued (`REQ-CL-3`).
 
+Pending reports outlive the app (`T-050-11`, `src/admission/report-store.ts`). An
+admission is kept on the device before its submission is sent, and again once the
+submission ends; it is forgotten only when its report is recorded, refused for good,
+or given up on. The entries live in app storage (AsyncStorage); the session token
+each report is sent with lives in secure storage. When the app starts, it sends every
+report a previous run left, once each, relying on the idempotent report id. An
+admission whose submission was still in flight when the app died is reported as
+`failed` — the gate never learned its outcome — and is not submitted again; F-025
+reconciles it against the ledger's pass records. Every report carries the pass's
+holder.
+
 ## Clock and connectivity
 
 Iriguchi compares its clock with Kippu's on every response that carries Kippu's

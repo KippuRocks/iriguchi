@@ -15,12 +15,20 @@
 // kippu-api accepts reports of passes presented before a session's revocation for
 // 24 hours after it, so a sign-out or a revocation does not lose them.
 //
+// Every admission is kept on the device until its report is acknowledged
+// (T-050-11; report-store.ts), so a killed app loses no REQ-OP-3 evidence. On the
+// next start, `resume` sends each report left, once. An admission whose submission
+// was still in flight when the app died is reported as failed — the gate never
+// learned how it ended — which F-025 reconciles against the ledger's pass records
+// (features/025-derived-state/plan.md §5.5). Nothing is submitted again.
+//
 // Nothing here queues an admission: an admission exists only once a verdict was
 // obtained online (REQ-CL-3). Only its report waits.
 
 import type { AdmissionReportInput, AdmissionSubmission } from "@kippu/api";
 import type { Receipt, SignedAccessPass, Submission, Timestamp } from "@ticketto/sdk";
 import { refusalOf } from "../kippu/errors.ts";
+import { memoryReportStore, type PendingReport, type ReportStore } from "./report-store.ts";
 
 export interface AdmissionsDeps {
   /** Submits a pass through the SDK (`Ticketto.submitAccessPass`). */
@@ -33,8 +41,10 @@ export interface AdmissionsDeps {
   readonly sleep?: (ms: number) => Promise<void>;
   /** Delays between report attempts, in milliseconds; the last repeats. */
   readonly retryDelays?: readonly number[];
-  /** How long a report is retried: kippu-api accepts late reports for 24 hours. */
+  /** How long a report is retried, from its admission: kippu-api accepts late reports for 24 hours. */
   readonly reportDeadline?: number;
+  /** Where pending reports are kept until acknowledged. Defaults to memory. */
+  readonly store?: ReportStore;
 }
 
 export interface Admission {
@@ -65,6 +75,11 @@ export interface Admissions {
   pending(): number;
   /** Resolves once every admission made so far has been reported, or given up on. */
   idle(): Promise<void>;
+  /**
+   * Sends every report a previous run of the app left pending, once each: reports
+   * already being sent in this run are not sent again. Call it once, at start.
+   */
+  resume(): Promise<readonly ReportOutcome[]>;
 }
 
 const DEFAULT_DELAYS = [1_000, 2_000, 5_000, 15_000, 60_000];
@@ -100,17 +115,36 @@ function final(error: unknown): { reason: string | null } | null {
   }
 }
 
+function reportInput(pending: PendingReport, deviceClock: number): AdmissionReportInput {
+  return {
+    reportId: pending.reportId,
+    event: pending.event,
+    gate: pending.gate,
+    ticket: pending.ticket,
+    passId: pending.passId,
+    // The holder the decoded pass names, for F-025's "transfer before recording".
+    holder: pending.holder,
+    verdict: { kind: "admitted", submission: pending.submission ?? { outcome: "failed" } },
+    presentedAt: pending.presentedAt,
+    deviceClock,
+  };
+}
+
 export function createAdmissions(deps: AdmissionsDeps): Admissions {
   const sleep = deps.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
   const delays = deps.retryDelays ?? DEFAULT_DELAYS;
   const deadline = deps.reportDeadline ?? DAY;
+  const store = deps.store ?? memoryReportStore();
   const inFlight = new Set<Promise<ReportOutcome>>();
+  /** Report ids being submitted or sent in this run. */
+  const active = new Set<string>();
 
-  const send = async (input: AdmissionReportInput, token: string): Promise<ReportOutcome> => {
-    const giveUpAt = deps.deviceClock() + deadline;
+  const send = async (pending: PendingReport): Promise<ReportOutcome> => {
+    const giveUpAt = pending.admittedAt + deadline;
+    const input = reportInput(pending, deps.deviceClock());
     for (let attempt = 0; ; attempt++) {
       try {
-        await deps.report({ ...input, deviceClock: deps.deviceClock() }, token);
+        await deps.report({ ...input, deviceClock: deps.deviceClock() }, pending.token);
         return { kind: "recorded", input };
       } catch (error) {
         const refused = final(error);
@@ -122,34 +156,59 @@ export function createAdmissions(deps: AdmissionsDeps): Admissions {
     }
   };
 
+  /** Sends a pending report, and forgets it once acknowledged or given up on. */
+  const settle = async (pending: PendingReport): Promise<ReportOutcome> => {
+    const outcome = await send(pending);
+    await store.remove(pending.reportId).catch(() => {});
+    return outcome;
+  };
+
+  const track = (reportId: string, work: Promise<ReportOutcome>): Promise<ReportOutcome> => {
+    active.add(reportId);
+    inFlight.add(work);
+    work
+      .finally(() => {
+        inFlight.delete(work);
+        active.delete(reportId);
+      })
+      .catch(() => {});
+    return work;
+  };
+
   return {
     admit(admission) {
       const reportId = deps.reportId();
+      const admitted: PendingReport = {
+        reportId,
+        event: admission.event,
+        gate: admission.gate,
+        ticket: admission.pass.pass.ticket,
+        passId: admission.pass.pass.id,
+        holder: admission.pass.pass.holder,
+        presentedAt: admission.presentedAt,
+        admittedAt: deps.deviceClock(),
+        token: admission.token,
+      };
       const work = (async (): Promise<ReportOutcome> => {
+        // Kept before anything is sent, so the admission outlives the app. The
+        // operator has already admitted; this delays only the background submission.
+        await store.put(admitted).catch(() => {});
         const submission = await submissionOutcome(
           deps.submit(admission.pass, admission.presentedAt),
         );
-        const input: AdmissionReportInput = {
-          reportId,
-          event: admission.event,
-          gate: admission.gate,
-          ticket: admission.pass.pass.ticket,
-          passId: admission.pass.pass.id,
-          // The holder the decoded pass names, for F-025's "transfer before recording".
-          holder: admission.pass.pass.holder,
-          verdict: { kind: "admitted", submission },
-          presentedAt: admission.presentedAt,
-          deviceClock: deps.deviceClock(),
-        };
-        return send(input, admission.token);
+        const ended: PendingReport = { ...admitted, submission };
+        await store.put(ended).catch(() => {});
+        return settle(ended);
       })();
-      inFlight.add(work);
-      work.finally(() => inFlight.delete(work)).catch(() => {});
-      return work;
+      return track(reportId, work);
     },
     pending: () => inFlight.size,
     async idle() {
       while (inFlight.size > 0) await Promise.allSettled([...inFlight]);
+    },
+    async resume() {
+      const left = (await store.list()).filter((pending) => !active.has(pending.reportId));
+      return Promise.all(left.map((pending) => track(pending.reportId, settle(pending))));
     },
   };
 }

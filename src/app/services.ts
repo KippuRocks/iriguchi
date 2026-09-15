@@ -1,11 +1,13 @@
 // The operator services the app's screens use: the build's configuration
 // (app.config.ts), the device's secure storage, kippu-api, and the ledger.
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createSubmission, type Result, type Ticketto } from "@ticketto/sdk";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { type Admissions, createAdmissions, randomUuid } from "../admission/admissions.ts";
 import { reportAdmission } from "../admission/report.ts";
+import { persistentReportStore } from "../admission/report-store.ts";
 import { createServerClock, type ServerClock, timed } from "../clock/server-clock.ts";
 import { kippuClient } from "../kippu/client.ts";
 import { connectLedger, GATE_READ_RETRY } from "../ledger/ticketto.ts";
@@ -123,6 +125,9 @@ export function operatorServices(config: BuildConfig = buildConfig()): OperatorS
       ),
     deviceClock: clock.deviceNow,
     reportId: randomUuid,
+    // Pending reports outlive the app (T-050-11): entries in app storage, their
+    // session tokens in secure storage.
+    store: persistentReportStore(AsyncStorage, SecureStore),
   });
 
   return {

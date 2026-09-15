@@ -1,10 +1,19 @@
 // The gate's verdict and submission against the real system (see stack.ts for when it
-// runs): T-050-04's and T-050-06's acceptance criteria end to end, through the ledger
-// service, the sponsor relay and kippu-api.
+// runs): T-050-04's, T-050-06's and T-050-11's acceptance criteria end to end, through
+// the ledger service, the sponsor relay and kippu-api.
 
 import { describe, expect, it } from "vitest";
+import { persistentReportStore } from "../../src/admission/report-store.ts";
 import { decide } from "../../src/verdict/verdict.ts";
-import { holder, operatorDevices, organiser, stackAvailable, ticketFor } from "./stack.ts";
+import { deviceStorage } from "../device-storage.ts";
+import {
+  holder,
+  operatorDevices,
+  organiser,
+  restartedAdmissions,
+  stackAvailable,
+  ticketFor,
+} from "./stack.ts";
 
 const refusal = (verdict: Awaited<ReturnType<typeof decide>>) =>
   verdict.kind === "refuse" ? verdict.refusal : verdict.kind;
@@ -117,3 +126,36 @@ describe.skipIf(!stackAvailable)(
     }, 60_000);
   },
 );
+
+describe.skipIf(!stackAvailable)("T-050-11 against kippu-api and the ledger service", () => {
+  it("REQ-OP-3: a report pending when the app is killed is sent after restart, once, with its holder", async () => {
+    const api = await organiser();
+    const guest = await holder();
+    const { event, ticket } = await ticketFor(api, guest.account);
+    const device = deviceStorage();
+    const store = () => persistentReportStore(device.kv, device.secure);
+    const [killed] = await operatorDevices(api, event, ["North"], 1, {
+      store: store(),
+      neverReport: true,
+    });
+    if (killed === undefined) throw new Error("no device");
+    const pass = await guest.pass(ticket);
+    const presentedAt = killed.clock.now();
+    expect((await decide(killed.verdict, { event, gate: "North" }, pass)).kind).toBe("admit");
+    void killed.admissions.admit({ event, gate: "North", pass, presentedAt, token: killed.token });
+    await expect
+      .poll(async () => (await store().list())[0]?.submission?.outcome, { timeout: 20_000 })
+      .toBe("settled");
+
+    const restarted = restartedAdmissions(store());
+    expect((await restarted.resume()).map((o) => o.kind)).toEqual(["recorded"]);
+    expect(await restartedAdmissions(store()).resume()).toEqual([]);
+
+    // Ibento sees one report, with its holder: no flag, since it settled.
+    const { flags } = await api.derived.admissionFlags.list.query({ event });
+    expect(flags).toEqual([]);
+    expect(restarted.sent).toEqual([
+      expect.objectContaining({ passId: pass.pass.id, holder: guest.account, presentedAt }),
+    ]);
+  }, 60_000);
+});
