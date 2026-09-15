@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "Iriguchi",
+    "slug": "iriguchi",
+    "scheme": "iriguchi",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "rocks.kippu.iriguchi",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "rocks.kippu.iriguchi",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": ["expo-dev-client"]
+  }
+}
