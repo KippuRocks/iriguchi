@@ -28,3 +28,10 @@ name: Development build smoke test
 - assertVisible:
     id: "iriguchi-root"
 - assertVisible: "Iriguchi"
+# T-050-10: the screen carries its screenId, and marks itself settled.
+- assertVisible:
+    id: "app.starting"
+- extendedWaitUntil:
+    visible:
+      id: "app.starting.settled"
+    timeout: 30000

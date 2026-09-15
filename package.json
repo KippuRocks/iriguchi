@@ -20,7 +20,9 @@
     "test": "vitest run",
     "bundle:check": "expo export --platform ios --platform android --output-dir .expo/export-check",
     "deps:check": "expo install --check",
-    "lint:copy": "node tools/copy-lint/cli.ts"
+    "lint:copy": "node tools/copy-lint/cli.ts",
+    "screens:write": "node tools/screens/cli.ts write",
+    "screens:check": "node tools/screens/cli.ts check"
   },
   "dependencies": {
     "expo": "57.0.22",
