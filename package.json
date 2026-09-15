@@ -37,7 +37,7 @@
     "@ticketto/sdk": "file:vendor/libticketto/ticketto-sdk-0.0.0.tgz",
     "@trpc/client": "11.18.0",
     "@trpc/server": "11.18.0",
-    "expo": "57.0.22",
+    "expo": "57.0.23",
     "expo-camera": "57.0.5",
     "expo-constants": "57.0.18",
     "expo-crypto": "57.0.3",
