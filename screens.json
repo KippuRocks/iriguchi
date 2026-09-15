@@ -34,7 +34,8 @@
       "route": null,
       "title": "Scan a pass",
       "navigatesTo": [
-        "gate.choose"
+        "gate.choose",
+        "operator.signin"
       ]
     }
   ]

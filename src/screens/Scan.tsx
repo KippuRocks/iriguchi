@@ -2,6 +2,7 @@ import type { EventId, SignedAccessPass } from "@ticketto/sdk";
 import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { refusalCopy } from "../copy/refusals.ts";
 import { SCAN_FIXTURE_ENABLED, scanFixture } from "../scan/fixture.ts";
 import { readScannedPass, type ScannedCode } from "../scan/read-pass.ts";
 import { decide, type Verdict, type VerdictDeps } from "../verdict/verdict.ts";
@@ -25,6 +26,8 @@ export interface ScanProps {
   readonly eventName: string | null;
   /** What each verdict needs; read at every scan, so a new session is used at once. */
   readonly verdictDeps: () => VerdictDeps;
+  /** The operator's session has ended: forget it on the device. */
+  readonly onSignedOut: () => void;
 }
 
 /**
@@ -32,7 +35,7 @@ export interface ScanProps {
  * read as an access pass, and the pass gets its verdict (T-050-04): admit, refuse,
  * or no verdict — never an admission without one (REQ-CL-3).
  */
-export function Scan({ router, event, gate, eventName, verdictDeps }: ScanProps) {
+export function Scan({ router, event, gate, eventName, verdictDeps, onSignedOut }: ScanProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [reading, setReading] = useState<Reading>({ kind: "scanning" });
   const [busy, setBusy] = useState(false);
@@ -120,7 +123,23 @@ export function Scan({ router, event, gate, eventName, verdictDeps }: ScanProps)
           </View>
         ) : reading.kind === "verdict" ? (
           <VerdictPanel verdict={reading.verdict} />
-        ) : reading.kind === "unreadable" ? (
+        ) : null}
+        {reading.kind === "verdict" &&
+        reading.verdict.kind === "refuse" &&
+        reading.verdict.refusal.source === "operator" &&
+        reading.verdict.refusal.reason === "signed-out" ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => {
+              onSignedOut();
+              router.navigate("gate.scan", "operator.signin", {});
+            }}
+            testID="verdict-sign-in"
+          >
+            <Text style={styles.link}>Sign in again</Text>
+          </Pressable>
+        ) : null}
+        {reading.kind === "unreadable" ? (
           <View style={styles.panel} testID="pass-unreadable">
             <Text style={styles.title}>This code is not a pass</Text>
             <Text style={styles.body}>Ask the holder to open the ticket in Saifu.</Text>
@@ -154,7 +173,7 @@ export function Scan({ router, event, gate, eventName, verdictDeps }: ScanProps)
   );
 }
 
-/** The verdict, as the operator acts on it. Refusal reasons in operator words are T-050-05's. */
+/** The verdict, as the operator acts on it; a refusal in operator words (T-050-05; REQ-Q-3). */
 function VerdictPanel({ verdict }: { readonly verdict: Verdict }) {
   const { pass } = verdict.pass;
   return (
@@ -164,8 +183,11 @@ function VerdictPanel({ verdict }: { readonly verdict: Verdict }) {
       ) : verdict.kind === "refuse" ? (
         <>
           <Text style={[styles.verdict, styles.refuse]}>Do not admit</Text>
-          <Text style={styles.body} testID="verdict-reason">
-            {verdict.refusal.source === "operator" ? verdict.refusal.reason : verdict.refusal.code}
+          <Text style={styles.title} testID="verdict-reason">
+            {refusalCopy(verdict.refusal).title}
+          </Text>
+          <Text style={styles.body} testID="verdict-action">
+            {refusalCopy(verdict.refusal).action}
           </Text>
         </>
       ) : (

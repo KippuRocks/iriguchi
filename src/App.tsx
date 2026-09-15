@@ -49,6 +49,11 @@ export function App() {
     return outcome;
   }, [services, session]);
   const verdictDeps = useCallback(() => services.verdict(session), [services, session]);
+  const signedOut = useCallback(() => {
+    services.store.clear().catch(() => {});
+    setSession(null);
+    setChosen(null);
+  }, [services]);
   const endSession = useCallback(async () => {
     await signOut(services.api(session), services.store);
     setSession(null);
@@ -69,6 +74,7 @@ export function App() {
           eventName={chosen?.eventName ?? null}
           gate={router.location.params.gate}
           router={router}
+          onSignedOut={signedOut}
           verdictDeps={verdictDeps}
         />
       ) : (
