@@ -84,7 +84,7 @@ export function App() {
           eventName={chosen?.eventName ?? null}
           gate={router.location.params.gate}
           router={router}
-          now={Date.now}
+          clock={services.clock}
           onAdmit={admit}
           onSignedOut={signedOut}
           verdictDeps={verdictDeps}

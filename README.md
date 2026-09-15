@@ -163,6 +163,21 @@ before a session ended for 24 hours after, so signing out loses none. Only
 admissions are submitted and reported; nothing is admitted without a verdict
 obtained online, so nothing is queued (`REQ-CL-3`).
 
+## Clock and connectivity
+
+Iriguchi compares its clock with Kippu's on every response that carries Kippu's
+time — `operators.check`'s `checkedAt`, taken when the gate opens and on every scan,
+and an admission report's `receivedAt` — measured at the middle of the request
+(`src/clock/server-clock.ts`, `F-050` plan §5.3). Beyond 10 seconds, the tolerance
+agreed with F-025, the scan screen warns the operator; the drift reaches the
+organiser through each admission report, which carries the device's unadjusted
+clock. Iriguchi never changes the device's clock: a pass's presentation time, and
+the time its window is judged at, are server-adjusted.
+
+Without a network connection (as the platform reports it, `@react-native-community/netinfo`)
+the scan screen blocks: "No connection — cannot admit". It scans nothing and
+queues nothing (`REQ-CL-3`).
+
 ## Device tests
 
 Flows in `.maestro/` run with [Maestro](https://maestro.mobile.dev) against an

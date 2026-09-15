@@ -6,6 +6,7 @@ import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { type Admissions, createAdmissions, randomUuid } from "../admission/admissions.ts";
 import { reportAdmission } from "../admission/report.ts";
+import { createServerClock, type ServerClock, timed } from "../clock/server-clock.ts";
 import { kippuClient } from "../kippu/client.ts";
 import { connectLedger, GATE_READ_RETRY } from "../ledger/ticketto.ts";
 import { checkOperator } from "../operator/check.ts";
@@ -57,6 +58,8 @@ export interface OperatorServices {
   verdict(session: OperatorSessionRecord | null): VerdictDeps;
   /** Background submission and reporting of admissions (T-050-06). */
   readonly admissions: Admissions;
+  /** The device's clock against Kippu's (T-050-07). */
+  readonly clock: ServerClock;
 }
 
 const LEDGER_UNAVAILABLE = {
@@ -65,6 +68,7 @@ const LEDGER_UNAVAILABLE = {
 } as const satisfies Result<never>;
 
 export function operatorServices(config: BuildConfig = buildConfig()): OperatorServices {
+  const clock = createServerClock();
   // One connection to the ledger service for the gate's reads, made on first use; a
   // failed attempt is forgotten, so the next scan tries again.
   let connection: Promise<Result<Ticketto>> | null = null;
@@ -111,13 +115,19 @@ export function operatorServices(config: BuildConfig = buildConfig()): OperatorS
         .catch((reason: unknown) => controller.failed(reason));
       return controller.submission;
     },
-    report: reportAdmission(config.kippuApiUrl),
-    deviceClock: () => Date.now(),
+    report: (input, token) =>
+      timed(
+        clock,
+        () => reportAdmission(config.kippuApiUrl)(input, token),
+        (r) => r.receivedAt,
+      ),
+    deviceClock: clock.deviceNow,
     reportId: randomUuid,
   });
 
   return {
     admissions,
+    clock,
     store: secureSessionStore(SecureStore),
     api: (session) =>
       operatorApi(kippuClient({ url: config.kippuApiUrl, token: () => session?.token })),
@@ -129,9 +139,14 @@ export function operatorServices(config: BuildConfig = buildConfig()): OperatorS
           canAttend: viaLedger("canAttend"),
           getCredential: viaLedger("getCredential"),
         } as VerdictDeps["ledger"],
-        checkOperator: (gate) => checkOperator(client, gate),
+        checkOperator: (gate) =>
+          timed(
+            clock,
+            () => checkOperator(client, gate),
+            (check) => (check.kind === "authorised" ? check.authorisation.checkedAt : null),
+          ),
         rpId: config.rpId,
-        now: () => Date.now(),
+        now: clock.now,
       };
     },
   };

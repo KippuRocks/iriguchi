@@ -66,6 +66,31 @@ name: Development build smoke test
     id: "scan-gate"
     text: "North"
 - assertVisible: "Smoke Test Night"
+# T-050-07: the stand-in's clock runs 30 s behind the device's. Opening the gate
+# compares the clocks, and the operator is warned.
+- extendedWaitUntil:
+    visible:
+      id: "clock-drift-warning"
+    timeout: 30000
+# T-050-07: in airplane mode the gate blocks: no scanning, no admission (REQ-CL-3).
+# Maestro sets airplane mode on Android only; the iOS simulator shares the host's
+# network and cannot be taken offline.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - setAirplaneMode: enabled
+      - extendedWaitUntil:
+          visible:
+            id: "gate-offline"
+          timeout: 30000
+      - assertNotVisible:
+          id: "scan-fixture"
+      - setAirplaneMode: disabled
+      - extendedWaitUntil:
+          notVisible:
+            id: "gate-offline"
+          timeout: 60000
 # T-050-03: a Saifu pass's QR code (test/fixtures/saifu-pass.png), read by the
 # platform's own QR decoder — Core Image on iOS, ML Kit on Android — decodes to
 # the pass it carries. Simulators have no camera, so the scan fixture stands in
