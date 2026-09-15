@@ -1,6 +1,8 @@
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "./screens/router.ts";
+import { Scan } from "./screens/Scan.tsx";
 import { Starting } from "./screens/Starting.tsx";
 
 /**
@@ -9,10 +11,16 @@ import { Starting } from "./screens/Starting.tsx";
  */
 export function App() {
   const router = useRouter();
+  const { navigate } = router;
   const screen = router.location.screen;
+
+  useEffect(() => {
+    if (screen === "app.starting") navigate("app.starting", "gate.scan", {});
+  }, [screen, navigate]);
+
   return (
     <View style={styles.root} testID="iriguchi-root">
-      {screen === "app.starting" ? <Starting /> : null}
+      {screen === "gate.scan" ? <Scan /> : <Starting />}
       <StatusBar style="auto" />
     </View>
   );

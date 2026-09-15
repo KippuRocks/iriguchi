@@ -22,11 +22,18 @@
     "deps:check": "expo install --check",
     "lint:copy": "node tools/copy-lint/cli.ts",
     "screens:write": "node tools/screens/cli.ts write",
-    "screens:check": "node tools/screens/cli.ts check"
+    "screens:check": "node tools/screens/cli.ts check",
+    "vendor:libticketto": "tools/vendor-libticketto.sh",
+    "vendor:check": "tools/vendor-libticketto.sh --check",
+    "fixtures:write": "node tools/fixtures/cli.ts"
   },
   "dependencies": {
+    "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz",
+    "@ticketto/sdk": "file:vendor/libticketto/ticketto-sdk-0.0.0.tgz",
     "expo": "57.0.22",
+    "expo-camera": "57.0.5",
     "expo-dev-client": "57.0.19",
+    "expo-image-loader": "57.0.1",
     "expo-status-bar": "57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3"
@@ -34,8 +41,13 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
     "@types/node": "24.13.4",
+    "@types/pngjs": "6.0.5",
+    "@types/qrcode": "1.5.6",
     "@types/react": "19.2.18",
+    "jsqr": "1.4.0",
     "oxc-parser": "0.149.0",
+    "pngjs": "7.0.0",
+    "qrcode": "1.5.4",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   },
@@ -44,6 +56,20 @@
       "exclude": [
         "typescript"
       ]
+    },
+    "autolinking": {
+      "buildFromSource": [
+        "expo-camera"
+      ]
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "@ticketto/sdk": "file:vendor/libticketto/ticketto-sdk-0.0.0.tgz",
+      "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz"
+    },
+    "patchedDependencies": {
+      "expo-camera@57.0.5": "patches/expo-camera@57.0.5.patch"
     }
   }
 }

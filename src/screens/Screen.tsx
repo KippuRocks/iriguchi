@@ -27,5 +27,7 @@ export function Screen({ id, busy = false, children }: ScreenProps) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  marker: { position: "absolute", left: 0, bottom: 0, width: 1, height: 1 },
+  // At the top: a screen that fills the window reaches under Android's edge-to-edge
+  // navigation bar, where the marker would be hidden from UI automation.
+  marker: { position: "absolute", left: 0, top: 0, width: 1, height: 1 },
 });

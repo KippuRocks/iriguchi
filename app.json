@@ -21,6 +21,17 @@
       },
       "predictiveBackGestureEnabled": false
     },
-    "plugins": ["expo-dev-client"]
+    "plugins": [
+      "expo-dev-client",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Iriguchi uses the camera to scan passes at the gate.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ]
+    ]
   }
 }
