@@ -1,7 +1,7 @@
 import type { SignedAccessPass } from "@ticketto/sdk";
 import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SCAN_FIXTURE_ENABLED, scanFixture } from "../scan/fixture.ts";
 import { readScannedPass, type ScannedCode } from "../scan/read-pass.ts";
 import type { Router } from "./router.ts";
@@ -53,7 +53,7 @@ export function Scan({ router, gate, eventName }: ScanProps) {
 
   return (
     <Screen busy={permission === null || busy} id="gate.scan">
-      <View style={styles.page}>
+      <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerText}>
             <Text style={styles.gate} testID="scan-gate">
@@ -142,18 +142,19 @@ export function Scan({ router, gate, eventName }: ScanProps) {
             <Text style={styles.link}>Scan the test pass</Text>
           </Pressable>
         ) : null}
-      </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, padding: 24, gap: 16 },
+  // Scrolls, so a verdict below the camera's place is reachable on a small screen.
+  page: { padding: 24, gap: 16 },
   heading: { fontSize: 28, fontWeight: "600" },
   header: { flexDirection: "row", alignItems: "center", gap: 12 },
   headerText: { flex: 1 },
   gate: { fontSize: 20, fontWeight: "600" },
-  camera: { flex: 1, minHeight: 240, overflow: "hidden", borderRadius: 12 },
+  camera: { height: 320, overflow: "hidden", borderRadius: 12 },
   panel: { gap: 6 },
   title: { fontSize: 22, fontWeight: "600" },
   label: { fontSize: 14, fontWeight: "600", marginTop: 6 },

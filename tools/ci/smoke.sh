@@ -67,15 +67,19 @@ encoded=$(node -p 'encodeURIComponent(process.argv[1])' "$url")
 # the app on its first launch.
 link="$scheme://expo-development-client/?url=$encoded&disableOnboarding=1&disableAutoLaunch=1"
 
-echo "opening $link"
-if [[ "$platform" == android ]]; then
-  adb shell am start -W -a android.intent.action.VIEW -d "'$link'" "$app_id"
-else
-  # With the app already in front, iOS hands it its own link without asking.
-  xcrun simctl launch booted "$app_id"
-  sleep 5
-  xcrun simctl openurl booted "$link"
-fi
+# Opens the development build on Metro, which loads the app afresh: every attempt of
+# the flow starts from the first screen, whatever an earlier attempt left.
+open_app() {
+  echo "opening $link"
+  if [[ "$platform" == android ]]; then
+    adb shell am start -W -a android.intent.action.VIEW -d "'$link'" "$app_id"
+  else
+    # With the app already in front, iOS hands it its own link without asking.
+    xcrun simctl launch booted "$app_id"
+    sleep 5
+    xcrun simctl openurl booted "$link"
+  fi
+}
 
 capture() {
   # The view hierarchy as Maestro sees it, to tell a hidden element from a missing one.
@@ -96,6 +100,7 @@ export MAESTRO_DRIVER_STARTUP_TIMEOUT=180000
 status=0
 for attempt in 1 2; do
   status=0
+  open_app
   maestro test \
     --env "APP_ID=$app_id" \
     --debug-output "$results/debug-$attempt" \

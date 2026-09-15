@@ -79,10 +79,21 @@ name: Development build smoke test
 - assertVisible:
     id: "pass-ticket"
     text: "7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e"
+# The scan screen scrolls: a small screen shows the rest of the pass below.
+- scrollUntilVisible:
+    element:
+      id: "pass-holder"
+    direction: DOWN
 - assertVisible:
     id: "pass-holder"
     text: "03867551a0096eb0f865cb69e83ef876d6c4947677048aebab2ec5d856cd1c29"
+- scrollUntilVisible:
+    element:
+      id: "scan-next"
+    direction: DOWN
 - tapOn:
     id: "scan-next"
-- assertVisible:
-    id: "scan-fixture"
+- scrollUntilVisible:
+    element:
+      id: "scan-fixture"
+    direction: DOWN
