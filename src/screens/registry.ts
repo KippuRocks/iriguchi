@@ -24,7 +24,9 @@ export interface ScreenDefinition {
 
 export const SCREENS = {
   "app.starting": { title: "Starting", route: null, params: [] },
-  "gate.scan": { title: "Scan a pass", route: null, params: [] },
+  "operator.signin": { title: "Sign in", route: null, params: [] },
+  "gate.choose": { title: "Choose a gate", route: null, params: [] },
+  "gate.scan": { title: "Scan a pass", route: null, params: ["event", "gate"] },
 } as const satisfies Readonly<Record<string, ScreenDefinition>>;
 
 export type ScreenId = keyof typeof SCREENS;

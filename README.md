@@ -61,6 +61,31 @@ committed:
     pnpm screens:check   # CI: fails on a screen without an id, undeclared or
                          # non-literal navigation, or an out-of-date screens.json
 
+## Operators
+
+An operator signs in by redeeming the one-time enrolment code their organiser
+issued in Ibento (`auth.operator.redeemEnrolmentCode`, `F-020` §5.1, `F-024`).
+Iriguchi keeps the session it opens in the platform's secure storage
+(`expo-secure-store`) and holds nothing that can sign on the ledger (`REQ-CL-2`).
+The operator then chooses one gate of one event among their grants
+(`operators.grants.mine`), with the event's name from its public metadata
+(`derived.events.get`), and the scanner opens for that gate. A revoked or ended
+session returns the operator to sign-in. Whether the operator is authorised at
+the gate right now is checked on every scan, not at selection (`AC-E5.2`).
+
+Service endpoints are configuration, with placeholders until hostnames are chosen:
+
+| Variable | Placeholder |
+|---|---|
+| `IRIGUCHI_KIPPU_API_URL` | `https://api.kippu.example` |
+
+`test/kippu-api-stand-in.ts` serves kippu-api's operator procedures over tRPC's
+HTTP wire format, with responses typed by `@kippu/api`, so a contract change fails
+to compile. The unit tests drive the real tRPC client against it, and CI's smoke
+flow runs it (`tools/ci/kippu-api-stand-in.ts`) so the development build signs in,
+chooses a gate and reaches the scanner on both platforms. It is a stand-in, not
+kippu-api: the system with the real services is kippu-e2e's (`F-070`).
+
 ## Scanning
 
 The scan screen (`gate.scan`, T-050-03) reads QR codes with `expo-camera` and reads
@@ -100,4 +125,5 @@ Cross-repository packages are not published. They are `pnpm pack` tarballs from
 pinned commits, checked by `pnpm vendor:check` in CI:
 
 - `@ticketto/sdk` and `@ticketto/profile-v0` from `libticketto`
-  (`pnpm vendor:libticketto <commit>`).
+  (`pnpm vendor:libticketto <commit>`);
+- `@kippu/api` (router types, `C5`) from `kippu-api` (`pnpm vendor:kippu-api <commit>`).

@@ -8,14 +8,34 @@
       "route": null,
       "title": "Starting",
       "navigatesTo": [
-        "gate.scan"
+        "gate.choose",
+        "operator.signin"
+      ]
+    },
+    {
+      "screenId": "operator.signin",
+      "route": null,
+      "title": "Sign in",
+      "navigatesTo": [
+        "gate.choose"
+      ]
+    },
+    {
+      "screenId": "gate.choose",
+      "route": null,
+      "title": "Choose a gate",
+      "navigatesTo": [
+        "gate.scan",
+        "operator.signin"
       ]
     },
     {
       "screenId": "gate.scan",
       "route": null,
       "title": "Scan a pass",
-      "navigatesTo": []
+      "navigatesTo": [
+        "gate.choose"
+      ]
     }
   ]
 }

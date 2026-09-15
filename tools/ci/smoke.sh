@@ -18,11 +18,17 @@ port=8081
 app_id=$(node -p 'const e = require("./app.json").expo; process.argv[1] === "ios" ? e.ios.bundleIdentifier : e.android.package' "$platform")
 scheme=$(node -p 'require("./app.json").expo.scheme')
 
+# T-050-02: kippu-api's operator procedures are a stand-in on port 8080
+# (tools/ci/kippu-api-stand-in.ts), which the app reaches as localhost.
+node tools/ci/kippu-api-stand-in.ts >"$results/kippu-api.log" 2>&1 &
+kippu=$!
+
 # T-050-03: the bundle offers the scan fixture (src/scan/fixture.ts), since
 # simulators and emulators have no camera to point at a pass.
-CI=1 EXPO_PUBLIC_IRIGUCHI_SCAN_FIXTURE=1 pnpm exec expo start --dev-client --port "$port" >"$results/metro.log" 2>&1 &
+CI=1 EXPO_PUBLIC_IRIGUCHI_SCAN_FIXTURE=1 IRIGUCHI_KIPPU_API_URL="http://localhost:8080" \
+  pnpm exec expo start --dev-client --port "$port" >"$results/metro.log" 2>&1 &
 metro=$!
-trap 'kill "$metro" 2>/dev/null || true' EXIT
+trap 'kill "$metro" "$kippu" 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 120); do
   if curl -fsS "http://localhost:$port/status" 2>/dev/null | grep -q "packager-status:running"; then
@@ -45,6 +51,7 @@ curl -fsS -o /dev/null --max-time 900 "http://localhost:$port/$bundle" || true
 
 if [[ "$platform" == android ]]; then
   adb reverse "tcp:$port" "tcp:$port"
+  adb reverse tcp:8080 tcp:8080
 fi
 
 # The camera permission is granted up front, as an operator grants it once.

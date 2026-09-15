@@ -24,22 +24,28 @@
     "screens:write": "node tools/screens/cli.ts write",
     "screens:check": "node tools/screens/cli.ts check",
     "vendor:libticketto": "tools/vendor-libticketto.sh",
-    "vendor:check": "tools/vendor-libticketto.sh --check",
-    "fixtures:write": "node tools/fixtures/cli.ts"
+    "vendor:check": "tools/vendor-libticketto.sh --check && tools/vendor-kippu-api.sh --check",
+    "fixtures:write": "node tools/fixtures/cli.ts",
+    "vendor:kippu-api": "tools/vendor-kippu-api.sh"
   },
   "dependencies": {
     "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz",
     "@ticketto/sdk": "file:vendor/libticketto/ticketto-sdk-0.0.0.tgz",
+    "@trpc/client": "11.18.0",
+    "@trpc/server": "11.18.0",
     "expo": "57.0.22",
     "expo-camera": "57.0.5",
+    "expo-constants": "57.0.18",
     "expo-dev-client": "57.0.19",
     "expo-image-loader": "57.0.1",
+    "expo-secure-store": "57.0.4",
     "expo-status-bar": "57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
+    "@kippu/api": "file:vendor/kippu-api/kippu-api-0.0.0.tgz",
     "@types/node": "24.13.4",
     "@types/pngjs": "6.0.5",
     "@types/qrcode": "1.5.6",

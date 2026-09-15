@@ -27,13 +27,38 @@ name: Development build smoke test
           optional: true
 - assertVisible:
     id: "iriguchi-root"
-# T-050-10: the screen carries its screenId, and marks itself settled.
+# T-050-10: each screen carries its screenId, and marks itself settled.
+# T-050-02: an operator redeems the enrolment code their organiser issued, and with
+# a grant reaches the scan screen of the gate they choose. kippu-api is the
+# stand-in tools/ci/smoke.sh starts.
+- extendedWaitUntil:
+    visible:
+      id: "operator.signin.settled"
+    timeout: 30000
+- tapOn:
+    id: "signin-code"
+- inputText: "GATE-ENROL-TEST"
+- hideKeyboard:
+    optional: true
+- tapOn:
+    id: "signin-submit"
+- extendedWaitUntil:
+    visible:
+      id: "gate.choose.settled"
+    timeout: 30000
+- assertVisible:
+    id: "gate-choice"
+    text: ".*North.*"
+- tapOn:
+    id: "gate-choice"
 - extendedWaitUntil:
     visible:
       id: "gate.scan.settled"
     timeout: 30000
 - assertVisible:
-    id: "gate.scan"
+    id: "scan-gate"
+    text: "North"
+- assertVisible: "Smoke Test Night"
 # T-050-03: a Saifu pass's QR code (test/fixtures/saifu-pass.png), read by the
 # platform's own QR decoder — Core Image on iOS, ML Kit on Android — decodes to
 # the pass it carries. Simulators have no camera, so the scan fixture stands in
