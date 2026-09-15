@@ -1,3 +1,4 @@
+import "./src/platform/install-polyfills.ts";
 import { registerRootComponent } from "expo";
 import { App } from "./src/App";
 

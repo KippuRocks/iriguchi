@@ -76,11 +76,14 @@ name: Development build smoke test
     direction: DOWN
 - tapOn:
     id: "scan-fixture"
+# T-050-04: the pass then gets its verdict. The smoke flow runs no ledger service,
+# so the verdict is "no verdict — do not admit" (REQ-CL-3); the verdicts themselves
+# are tested end to end in src/verdict/verdict.test.ts and in kippu-e2e.
 - scrollUntilVisible:
     element:
-      id: "pass-read"
+      id: "verdict-unavailable"
     direction: DOWN
-    timeout: 30000
+    timeout: 60000
 - scrollUntilVisible:
     element:
       id: "pass-ticket"

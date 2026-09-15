@@ -1,3 +1,4 @@
+import type { EventId } from "@ticketto/sdk";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -47,6 +48,7 @@ export function App() {
     if (outcome.kind === "signed-out") setSession(null);
     return outcome;
   }, [services, session]);
+  const verdictDeps = useCallback(() => services.verdict(session), [services, session]);
   const endSession = useCallback(async () => {
     await signOut(services.api(session), services.store);
     setSession(null);
@@ -59,11 +61,15 @@ export function App() {
         <OperatorSignIn router={router} signIn={redeem} />
       ) : screen === "gate.choose" ? (
         <ChooseGate loadGates={gates} onChoose={setChosen} router={router} signOut={endSession} />
-      ) : screen === "gate.scan" && router.location.params.gate !== undefined ? (
+      ) : screen === "gate.scan" &&
+        router.location.params.gate !== undefined &&
+        router.location.params.event !== undefined ? (
         <Scan
+          event={router.location.params.event as EventId}
           eventName={chosen?.eventName ?? null}
           gate={router.location.params.gate}
           router={router}
+          verdictDeps={verdictDeps}
         />
       ) : (
         <Starting />

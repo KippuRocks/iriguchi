@@ -15,7 +15,7 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 out="$root/vendor/libticketto"
 repository="https://github.com/KippuRocks/libticketto.git"
-packages=(sdk profile-v0)
+packages=(sdk profile-v0 binding-offchain ledger-rules log backend-memory)
 
 mode=vendor
 if [[ "${1:-}" == "--check" ]]; then
@@ -42,7 +42,7 @@ resolved=$(git -C "$work/src" rev-parse HEAD)
 
 (
   cd "$work/src"
-  pnpm install --frozen-lockfile --filter "@ticketto/profile-v0..." >/dev/null
+  pnpm install --frozen-lockfile --filter "@ticketto/backend-memory..." --filter "@ticketto/binding-offchain..." >/dev/null
   for package in "${packages[@]}"; do
     pnpm --filter "@ticketto/$package" build >/dev/null
   done

@@ -29,6 +29,8 @@
     "vendor:kippu-api": "tools/vendor-kippu-api.sh"
   },
   "dependencies": {
+    "@kippu/sponsorship": "file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz",
+    "@ticketto/binding-offchain": "file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz",
     "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz",
     "@ticketto/sdk": "file:vendor/libticketto/ticketto-sdk-0.0.0.tgz",
     "@trpc/client": "11.18.0",
@@ -36,6 +38,7 @@
     "expo": "57.0.22",
     "expo-camera": "57.0.5",
     "expo-constants": "57.0.18",
+    "expo-crypto": "57.0.3",
     "expo-dev-client": "57.0.19",
     "expo-image-loader": "57.0.1",
     "expo-secure-store": "57.0.4",
@@ -46,6 +49,10 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
     "@kippu/api": "file:vendor/kippu-api/kippu-api-0.0.0.tgz",
+    "@noble/curves": "2.4.0",
+    "@ticketto/backend-memory": "file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz",
+    "@ticketto/ledger-rules": "file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz",
+    "@ticketto/log": "file:vendor/libticketto/ticketto-log-0.0.0.tgz",
     "@types/node": "24.13.4",
     "@types/pngjs": "6.0.5",
     "@types/qrcode": "1.5.6",
@@ -72,7 +79,11 @@
   "pnpm": {
     "overrides": {
       "@ticketto/sdk": "file:vendor/libticketto/ticketto-sdk-0.0.0.tgz",
-      "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz"
+      "@ticketto/profile-v0": "file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz",
+      "@ticketto/binding-offchain": "file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz",
+      "@ticketto/ledger-rules": "file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz",
+      "@ticketto/log": "file:vendor/libticketto/ticketto-log-0.0.0.tgz",
+      "@ticketto/backend-memory": "file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz"
     },
     "patchedDependencies": {
       "expo-camera@57.0.5": "patches/expo-camera@57.0.5.patch"

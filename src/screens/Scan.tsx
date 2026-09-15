@@ -1,15 +1,18 @@
-import type { SignedAccessPass } from "@ticketto/sdk";
+import type { EventId, SignedAccessPass } from "@ticketto/sdk";
 import { type BarcodeScanningResult, CameraView, useCameraPermissions } from "expo-camera";
 import { useCallback, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SCAN_FIXTURE_ENABLED, scanFixture } from "../scan/fixture.ts";
 import { readScannedPass, type ScannedCode } from "../scan/read-pass.ts";
+import { decide, type Verdict, type VerdictDeps } from "../verdict/verdict.ts";
 import type { Router } from "./router.ts";
 import { Screen } from "./Screen.tsx";
 
 type Reading =
   | { readonly kind: "scanning" }
-  | { readonly kind: "read"; readonly pass: SignedAccessPass }
+  /** The pass decoded; its three checks are running (T-050-04). */
+  | { readonly kind: "checking"; readonly pass: SignedAccessPass }
+  | { readonly kind: "verdict"; readonly verdict: Verdict }
   | { readonly kind: "unreadable" };
 
 const time = (ms: number) => new Date(ms).toLocaleTimeString();
@@ -17,23 +20,37 @@ const time = (ms: number) => new Date(ms).toLocaleTimeString();
 export interface ScanProps {
   readonly router: Router;
   /** The gate being operated (T-050-02). */
+  readonly event: EventId;
   readonly gate: string;
   readonly eventName: string | null;
+  /** What each verdict needs; read at every scan, so a new session is used at once. */
+  readonly verdictDeps: () => VerdictDeps;
 }
 
 /**
- * The gate's scanner (T-050-03; US-E1, AD-13): the camera reads QR codes, and a
- * code is read as an access pass. What the pass admits is the verdict's (T-050-04).
+ * The gate's scanner (T-050-03; US-E1, AD-13): the camera reads QR codes, a code is
+ * read as an access pass, and the pass gets its verdict (T-050-04): admit, refuse,
+ * or no verdict — never an admission without one (REQ-CL-3).
  */
-export function Scan({ router, gate, eventName }: ScanProps) {
+export function Scan({ router, event, gate, eventName, verdictDeps }: ScanProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [reading, setReading] = useState<Reading>({ kind: "scanning" });
   const [busy, setBusy] = useState(false);
 
-  const read = useCallback((code: ScannedCode | null) => {
-    const pass = code === null ? null : readScannedPass(code);
-    setReading(pass?.ok ? { kind: "read", pass: pass.value } : { kind: "unreadable" });
-  }, []);
+  const read = useCallback(
+    (code: ScannedCode | null) => {
+      const pass = code === null ? null : readScannedPass(code);
+      if (!pass?.ok) {
+        setReading({ kind: "unreadable" });
+        return;
+      }
+      setReading({ kind: "checking", pass: pass.value });
+      decide(verdictDeps(), { event, gate }, pass.value)
+        .catch((): Verdict => ({ kind: "unavailable", pass: pass.value, unreachable: "both" }))
+        .then((verdict) => setReading({ kind: "verdict", verdict }));
+    },
+    [verdictDeps, event, gate],
+  );
 
   const onBarcodeScanned = useCallback(
     (result: BarcodeScanningResult) => read({ rawBytes: result.rawBytes }),
@@ -52,7 +69,7 @@ export function Scan({ router, gate, eventName }: ScanProps) {
   }, [read]);
 
   return (
-    <Screen busy={permission === null || busy} id="gate.scan">
+    <Screen busy={permission === null || busy || reading.kind === "checking"} id="gate.scan">
       <ScrollView contentContainerStyle={styles.page}>
         <View style={styles.header}>
           <View style={styles.headerText}>
@@ -97,22 +114,12 @@ export function Scan({ router, gate, eventName }: ScanProps) {
           </View>
         ) : null}
 
-        {reading.kind === "read" ? (
-          <View style={styles.panel} testID="pass-read">
-            <Text style={styles.title}>Pass read</Text>
-            <Text style={styles.label}>Ticket</Text>
-            <Text selectable style={styles.value} testID="pass-ticket">
-              {reading.pass.pass.ticket}
-            </Text>
-            <Text style={styles.label}>Holder</Text>
-            <Text selectable style={styles.value} testID="pass-holder">
-              {reading.pass.pass.holder}
-            </Text>
-            <Text style={styles.label}>Presentable</Text>
-            <Text style={styles.value}>
-              {time(reading.pass.pass.notBefore)} – {time(reading.pass.pass.notAfter)}
-            </Text>
+        {reading.kind === "checking" ? (
+          <View style={styles.panel} testID="verdict-checking">
+            <Text style={styles.title}>Checking…</Text>
           </View>
+        ) : reading.kind === "verdict" ? (
+          <VerdictPanel verdict={reading.verdict} />
         ) : reading.kind === "unreadable" ? (
           <View style={styles.panel} testID="pass-unreadable">
             <Text style={styles.title}>This code is not a pass</Text>
@@ -120,7 +127,7 @@ export function Scan({ router, gate, eventName }: ScanProps) {
           </View>
         ) : null}
 
-        {reading.kind !== "scanning" ? (
+        {reading.kind === "verdict" || reading.kind === "unreadable" ? (
           <Pressable
             accessibilityRole="button"
             onPress={() => setReading({ kind: "scanning" })}
@@ -147,7 +154,50 @@ export function Scan({ router, gate, eventName }: ScanProps) {
   );
 }
 
+/** The verdict, as the operator acts on it. Refusal reasons in operator words are T-050-05's. */
+function VerdictPanel({ verdict }: { readonly verdict: Verdict }) {
+  const { pass } = verdict.pass;
+  return (
+    <View style={styles.panel} testID={`verdict-${verdict.kind}`}>
+      {verdict.kind === "admit" ? (
+        <Text style={[styles.verdict, styles.admit]}>Admit</Text>
+      ) : verdict.kind === "refuse" ? (
+        <>
+          <Text style={[styles.verdict, styles.refuse]}>Do not admit</Text>
+          <Text style={styles.body} testID="verdict-reason">
+            {verdict.refusal.source === "operator" ? verdict.refusal.reason : verdict.refusal.code}
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text style={[styles.verdict, styles.refuse]}>No verdict — do not admit</Text>
+          <Text style={styles.body}>
+            {verdict.unreachable === "kippu"
+              ? "Kippu could not be reached to check your authorisation."
+              : "The ledger could not be reached to check this pass."}
+          </Text>
+        </>
+      )}
+      <Text style={styles.label}>Ticket</Text>
+      <Text selectable style={styles.value} testID="pass-ticket">
+        {pass.ticket}
+      </Text>
+      <Text style={styles.label}>Holder</Text>
+      <Text selectable style={styles.value} testID="pass-holder">
+        {pass.holder}
+      </Text>
+      <Text style={styles.label}>Presentable</Text>
+      <Text style={styles.value}>
+        {time(pass.notBefore)} – {time(pass.notAfter)}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  verdict: { fontSize: 32, fontWeight: "700" },
+  admit: { color: "#1b6e20" },
+  refuse: { color: "#b3261e" },
   // Scrolls, so a verdict below the camera's place is reachable on a small screen.
   page: { padding: 24, gap: 16 },
   heading: { fontSize: 28, fontWeight: "600" },

@@ -7,6 +7,10 @@ settings:
 overrides:
   '@ticketto/sdk': file:vendor/libticketto/ticketto-sdk-0.0.0.tgz
   '@ticketto/profile-v0': file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
+  '@ticketto/binding-offchain': file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz
+  '@ticketto/ledger-rules': file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz
+  '@ticketto/log': file:vendor/libticketto/ticketto-log-0.0.0.tgz
+  '@ticketto/backend-memory': file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz
 
 patchedDependencies:
   expo-camera@57.0.5:
@@ -17,6 +21,12 @@ importers:
 
   .:
     dependencies:
+      '@kippu/sponsorship':
+        specifier: file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz
+        version: file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz(@ticketto/profile-v0@file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz)(@ticketto/sdk@file:vendor/libticketto/ticketto-sdk-0.0.0.tgz)
+      '@ticketto/binding-offchain':
+        specifier: file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz
+        version: file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz
       '@ticketto/profile-v0':
         specifier: file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
         version: file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
@@ -38,6 +48,9 @@ importers:
       expo-constants:
         specifier: 57.0.18
         version: 57.0.18(expo@57.0.22)(react-native@0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))
+      expo-crypto:
+        specifier: 57.0.3
+        version: 57.0.3(expo@57.0.22)
       expo-dev-client:
         specifier: 57.0.19
         version: 57.0.19(expo@57.0.22)(react-native@0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))
@@ -63,6 +76,18 @@ importers:
       '@kippu/api':
         specifier: file:vendor/kippu-api/kippu-api-0.0.0.tgz
         version: file:vendor/kippu-api/kippu-api-0.0.0.tgz(@trpc/server@11.18.0(typescript@7.0.2))
+      '@noble/curves':
+        specifier: 2.4.0
+        version: 2.4.0
+      '@ticketto/backend-memory':
+        specifier: file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz
+        version: file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz
+      '@ticketto/ledger-rules':
+        specifier: file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz
+        version: file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz
+      '@ticketto/log':
+        specifier: file:vendor/libticketto/ticketto-log-0.0.0.tgz
+        version: file:vendor/libticketto/ticketto-log-0.0.0.tgz
       '@types/node':
         specifier: 24.13.4
         version: 24.13.4
@@ -686,11 +711,19 @@ packages:
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
   '@kippu/api@file:vendor/kippu-api/kippu-api-0.0.0.tgz':
-    resolution: {integrity: sha512-twZXf8QsW+mkXygtJu63x0q1fE+kiQ/UfkAYGOOOA5iS+fTTNzqs88oRoLh7lSHm3s3Eiz6kAG2DkalCI+F2fQ==, tarball: file:vendor/kippu-api/kippu-api-0.0.0.tgz}
+    resolution: {integrity: sha512-GH6MAS46YoqiD82TZ6aEmgrQKoYAgPp2ianxCiRFGFGCCYpsU5Nfegm9j/if11ddtx/B3ybM8nNx1mHN4u7D7Q==, tarball: file:vendor/kippu-api/kippu-api-0.0.0.tgz}
     version: 0.0.0
     engines: {node: '>=24'}
     peerDependencies:
       '@trpc/server': ^11.18.0
+
+  '@kippu/sponsorship@file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz':
+    resolution: {integrity: sha512-/5KN7twZqsOPNl7cWPZM5bJjBBHUHInPyyo8pSTpLC1Oy5K8o2biw+xFaXndjoshKnsasi+Xz2rkkwabXL27Eg==, tarball: file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz}
+    version: 0.0.0
+    engines: {node: '>=24'}
+    peerDependencies:
+      '@ticketto/profile-v0': 0.0.0
+      '@ticketto/sdk': 0.0.0
 
   '@noble/curves@2.4.0':
     resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
@@ -972,6 +1005,26 @@ packages:
 
   '@sinclair/typebox@0.27.12':
     resolution: {integrity: sha512-hhyNJ+nbR6ZR7pToHvllEFun9TL0sbL+tk/ON75lo+Xas054uez98qRbsuNt7MBCyZKK4+8Yli/OAGZhmfBZ/g==}
+
+  '@ticketto/backend-memory@file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz':
+    resolution: {integrity: sha512-hvBm3Ef+8MwR8ShhggoHYkZu5EGiqJn7NV+0jgD2U8OH/EdH+G2tyhdjDYLUttu9TzATQivkg12jkAaVR3AtRA==, tarball: file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz}
+    version: 0.0.0
+    engines: {node: '>=24'}
+
+  '@ticketto/binding-offchain@file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz':
+    resolution: {integrity: sha512-OFadIl4kQhdNt+3fEeUQQq25oaxOD1UO51nLL6VQlePGfx/3CIbygnPheb+4Oyw89E1sKwDwcKe7Wcua0XUaMQ==, tarball: file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz}
+    version: 0.0.0
+    engines: {node: '>=24'}
+
+  '@ticketto/ledger-rules@file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz':
+    resolution: {integrity: sha512-oH9SsFwKs1JFpJFus+iVRRjdXXzS0qv0Pd6wQwABTxK75Z8jFqodL0fIGnHeJi0LPi1wZTJnwVZNFFFjg9bnWw==, tarball: file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz}
+    version: 0.0.0
+    engines: {node: '>=24'}
+
+  '@ticketto/log@file:vendor/libticketto/ticketto-log-0.0.0.tgz':
+    resolution: {integrity: sha512-Fe/EGvZV9JOS6mBRDu+hEZw05vbceOBxKAS+0yep61Gi/cBrWIWkRIPo33HSMUrN3r/WCmiVghYq6W3JBLBfgw==, tarball: file:vendor/libticketto/ticketto-log-0.0.0.tgz}
+    version: 0.0.0
+    engines: {node: '>=24'}
 
   '@ticketto/profile-v0@file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz':
     resolution: {integrity: sha512-i+rdFkBu/7Pcrl4RLe9lnV5zeYBH5VGSNRuOwnVgRUBwP4O4eTTfIQuc1RYsFer6wT5kWSp7bQZqTHn9w+Mxkw==, tarball: file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz}
@@ -1589,6 +1642,11 @@ packages:
     peerDependencies:
       expo: '*'
       react-native: '*'
+
+  expo-crypto@57.0.3:
+    resolution: {integrity: sha512-SAWqEfF37nc8ot7bXsVmu9AFYwQdC2kGvH/eNAHiR3bmlcf1Vv8wu9AnGKT+a90r3T8YfwMpZP4QAYlo4vCn9w==}
+    peerDependencies:
+      expo: '*'
 
   expo-dev-client@57.0.19:
     resolution: {integrity: sha512-7giMK6BLL685GECHem2UAQvS473ImZLi5l+Q5tq+XSyv6I9UNVPs0p07mKwgBzq8z7DR3d4nTl702ziFxTjO3Q==}
@@ -3774,6 +3832,14 @@ snapshots:
     dependencies:
       '@trpc/server': 11.18.0(typescript@7.0.2)
 
+  '@kippu/sponsorship@file:vendor/kippu-api/kippu-sponsorship-0.0.0.tgz(@ticketto/profile-v0@file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz)(@ticketto/sdk@file:vendor/libticketto/ticketto-sdk-0.0.0.tgz)':
+    dependencies:
+      '@noble/curves': 2.4.0
+      '@noble/hashes': 2.4.0
+      '@ticketto/profile-v0': file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
+      '@ticketto/sdk': file:vendor/libticketto/ticketto-sdk-0.0.0.tgz
+      scale-ts: 1.6.1
+
   '@noble/curves@2.4.0':
     dependencies:
       '@noble/hashes': 2.4.0
@@ -3965,6 +4031,27 @@ snapshots:
   '@rolldown/pluginutils@1.0.1': {}
 
   '@sinclair/typebox@0.27.12': {}
+
+  '@ticketto/backend-memory@file:vendor/libticketto/ticketto-backend-memory-0.0.0.tgz':
+    dependencies:
+      '@ticketto/ledger-rules': file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz
+      '@ticketto/log': file:vendor/libticketto/ticketto-log-0.0.0.tgz
+      '@ticketto/sdk': file:vendor/libticketto/ticketto-sdk-0.0.0.tgz
+
+  '@ticketto/binding-offchain@file:vendor/libticketto/ticketto-binding-offchain-0.0.0.tgz':
+    dependencies:
+      '@ticketto/profile-v0': file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
+      '@ticketto/sdk': file:vendor/libticketto/ticketto-sdk-0.0.0.tgz
+
+  '@ticketto/ledger-rules@file:vendor/libticketto/ticketto-ledger-rules-0.0.0.tgz':
+    dependencies:
+      '@ticketto/profile-v0': file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
+      '@ticketto/sdk': file:vendor/libticketto/ticketto-sdk-0.0.0.tgz
+
+  '@ticketto/log@file:vendor/libticketto/ticketto-log-0.0.0.tgz':
+    dependencies:
+      '@ticketto/profile-v0': file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz
+      '@ticketto/sdk': file:vendor/libticketto/ticketto-sdk-0.0.0.tgz
 
   '@ticketto/profile-v0@file:vendor/libticketto/ticketto-profile-v0-0.0.0.tgz':
     dependencies:
@@ -4513,6 +4600,10 @@ snapshots:
       react-native: 0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3)
     transitivePeerDependencies:
       - supports-color
+
+  expo-crypto@57.0.3(expo@57.0.22):
+    dependencies:
+      expo: 57.0.22(@babel/core@7.29.7)(@expo/dom-webview@57.0.1)(react-native@0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3))(react@19.2.3)(typescript@7.0.2)
 
   expo-dev-client@57.0.19(expo@57.0.22)(react-native@0.86.3(@babel/core@7.29.7)(@types/react@19.2.18)(react@19.2.3)):
     dependencies:
