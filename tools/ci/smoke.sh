@@ -71,6 +71,8 @@ else
 fi
 
 capture() {
+  # The view hierarchy as Maestro sees it, to tell a hidden element from a missing one.
+  maestro hierarchy >"$results/hierarchy.json" 2>"$results/hierarchy.log" || true
   if [[ "$platform" == android ]]; then
     adb exec-out screencap -p >"$results/screen.png" || true
     adb logcat -d >"$results/logcat.txt" || true
