@@ -23,27 +23,43 @@ export interface StandInOptions {
   readonly host?: string;
   /** Session lifetime in milliseconds; 24 h, as kippu-api's operator sessions. */
   readonly sessionLifetime?: number;
+  /** Kippu's clock. Defaults to the system clock. */
+  readonly now?: () => number;
 }
 
 export interface StandIn {
   readonly url: string;
   /** Ends every session, as an organiser revoking the operator's sessions does. */
   revokeSessions(): void;
+  /** Revokes a grant: the next check under it is refused. */
+  revokeGrant(id: string): void;
   close(): Promise<void>;
 }
 
 class Refusal extends Error {
-  readonly code: "UNAUTHORIZED" | "BAD_REQUEST" | "NOT_FOUND";
+  readonly code: "UNAUTHORIZED" | "BAD_REQUEST" | "NOT_FOUND" | "FORBIDDEN";
   readonly httpStatus: number;
+  readonly reason: string | null;
 
-  constructor(code: Refusal["code"], httpStatus: number, message: string) {
+  constructor(
+    code: Refusal["code"],
+    httpStatus: number,
+    message: string,
+    reason: string | null = null,
+  ) {
     super(message);
     this.code = code;
     this.httpStatus = httpStatus;
+    this.reason = reason;
   }
 }
 
-const JSON_RPC_CODES = { BAD_REQUEST: -32600, UNAUTHORIZED: -32001, NOT_FOUND: -32004 } as const;
+const JSON_RPC_CODES = {
+  BAD_REQUEST: -32600,
+  UNAUTHORIZED: -32001,
+  FORBIDDEN: -32003,
+  NOT_FOUND: -32004,
+} as const;
 
 async function body(request: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
@@ -54,6 +70,8 @@ async function body(request: IncomingMessage): Promise<unknown> {
 
 export async function startKippuStandIn(options: StandInOptions): Promise<StandIn> {
   const lifetime = options.sessionLifetime ?? 24 * 60 * 60 * 1000;
+  const now = options.now ?? (() => Date.now());
+  const grants = options.grants.map((grant) => ({ ...grant }));
   let codeRedeemed = false;
   const sessions = new Set<string>();
   let issued = 0;
@@ -86,11 +104,40 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
     },
     "operators.grants.mine": (request) => {
       authenticated(request);
-      const now = Date.now();
-      const output: Outputs["operators"]["grants"]["mine"] = options.grants
-        .filter((grant) => grant.revokedAt === null && grant.until > now)
+      const at = now();
+      const output: Outputs["operators"]["grants"]["mine"] = grants
+        .filter((grant) => grant.revokedAt === null && grant.until > at)
         .sort((a, b) => a.from - b.from);
       return output;
+    },
+    "operators.check": (request, input) => {
+      authenticated(request);
+      const { event, gate } = (input ?? {}) as { event?: unknown; gate?: unknown };
+      if (typeof event !== "string" || typeof gate !== "string") {
+        throw new Refusal("BAD_REQUEST", 400, "expected an event and a gate");
+      }
+      const at = now();
+      const forGate = grants.filter((grant) => grant.event === event && grant.gates.includes(gate));
+      const active = forGate.find((grant) => grant.from <= at && at < grant.until);
+      if (active !== undefined && active.revokedAt === null) {
+        const output: Outputs["operators"]["check"] = {
+          event,
+          gate,
+          grant: active.id,
+          until: active.until,
+          checkedAt: at,
+        };
+        return output;
+      }
+      const reason =
+        active !== undefined
+          ? "grant-revoked"
+          : forGate.length === 0
+            ? "not-granted"
+            : forGate.some((grant) => grant.from > at)
+              ? "before-window"
+              : "after-window";
+      throw new Refusal("FORBIDDEN", 403, "not authorised at this gate now", reason);
     },
     "derived.events.get": (_request, input) => {
       const event = (input as { event?: unknown } | undefined)?.event;
@@ -153,7 +200,7 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
             httpStatus: refusal.httpStatus,
             path,
             errorCode: null,
-            reason: null,
+            reason: refusal.reason,
           },
         },
       });
@@ -167,6 +214,10 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
   return {
     url: `http://${options.host ?? "127.0.0.1"}:${port}`,
     revokeSessions: () => sessions.clear(),
+    revokeGrant: (id) => {
+      const grant = grants.find((g) => g.id === id);
+      if (grant !== undefined) Object.assign(grant, { revokedAt: new Date(now()).toISOString() });
+    },
     close: () => new Promise((resolve) => server.close(() => resolve())),
   };
 }

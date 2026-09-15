@@ -25,7 +25,9 @@ kippu=$!
 
 # T-050-03: the bundle offers the scan fixture (src/scan/fixture.ts), since
 # simulators and emulators have no camera to point at a pass.
+# T-050-04: no ledger service runs here; its address refuses connections at once.
 CI=1 EXPO_PUBLIC_IRIGUCHI_SCAN_FIXTURE=1 IRIGUCHI_KIPPU_API_URL="http://localhost:8080" \
+  IRIGUCHI_LEDGER_URL="http://localhost:9" IRIGUCHI_SPONSOR_URL="http://localhost:9" \
   pnpm exec expo start --dev-client --port "$port" >"$results/metro.log" 2>&1 &
 metro=$!
 trap 'kill "$metro" "$kippu" 2>/dev/null || true' EXIT

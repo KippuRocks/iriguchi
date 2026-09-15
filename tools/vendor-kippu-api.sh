@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
 # Vendors @kippu/api — the types of the Kippu API's tRPC router, contract C5 (F-020,
-# T-020-04) — from a pinned kippu-api commit, as Saifu and Ibento vendor theirs.
+# T-020-04) — and @kippu/sponsorship — the sponsor relay's client (F-023, T-023-07) —
+# from a pinned kippu-api commit, as Saifu and Ibento vendor theirs.
 #
 #   tools/vendor-kippu-api.sh <commit>   build and pack the packages at <commit> into
 #                                        vendor/kippu-api/, and record the commit
 #   tools/vendor-kippu-api.sh --check    rebuild at the recorded commit and fail if the
 #                                        vendored packages' contents differ
 #
-# Not published to any registry. @kippu/api is declarations only, and declares
+# Neither is published to any registry. @kippu/api is declarations only, and declares
 # @trpc/server as a peer dependency, which this repository installs at the same version.
+# @kippu/sponsorship declares @ticketto/sdk and @ticketto/profile-v0 as peer
+# dependencies, which resolve to this repository's vendored libticketto tarballs.
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 out="$root/vendor/kippu-api"
 repository="https://github.com/KippuRocks/kippu-api.git"
-packages=(api)
+packages=(api sponsorship)
 
 mode=vendor
 if [[ "${1:-}" == "--check" ]]; then

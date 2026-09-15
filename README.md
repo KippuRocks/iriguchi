@@ -112,6 +112,37 @@ platform's own QR decoder (`scanFromURLAsync`) and the camera's reading path. CI
 smoke flow does this on Android and iOS. `pnpm fixtures:write` regenerates the
 fixture; its inputs are fixed, so it does not change.
 
+## The verdict
+
+On a scan, three checks start together, and the verdict waits for all three
+(`src/verdict/verdict.ts`, `F-050` plan §5.1):
+
+| Check | Where | Answers |
+|---|---|---|
+| Signature and window | `profile-v0`'s `verifyPass`, against the credential's registration read from the ledger with `getCredential` | Is the pass authentic and current? (`AC-E1.2`, `AC-E1.3`) |
+| `getTicket` and `canAttend` | The ledger service, through the SDK over `binding-offchain` | Is the signer the current holder, and would the ticket admit? (`REQ-AP-1`, `REQ-Q-2`) |
+| `operators.check` | kippu-api (`F-024`) | Is this operator authorised at this gate, now? (`AC-E5.2`) |
+
+Every check only reads (`AC-E2.2`). If the ledger or Kippu does not answer, there is
+no verdict and Iriguchi does not admit (`REQ-CL-3`); the gate's reads retry once,
+briefly, rather than hold up the queue. When several checks refuse, the operator's
+own authorisation is shown first, then the ledger's own order for a pass
+(`F-008` plan §5.2): the ticket exists and belongs to this event, the pass is the
+current holder's, it is within its window, then `canAttend`'s reason.
+
+The ledger endpoints and the holder RP id are configuration, with placeholders:
+
+| Variable | Placeholder |
+|---|---|
+| `IRIGUCHI_LEDGER_URL` | `https://ledger.kippu.example` |
+| `IRIGUCHI_SPONSOR_URL` | `https://sponsor.kippu.example` |
+| `IRIGUCHI_RP_ID` | `kippu.example` — must equal Saifu's `SAIFU_RP_ID` |
+
+`src/verdict/verdict.test.ts` runs the verdict end to end in one process: the SDK
+over `ledger-rules` (`backend-memory`), Saifu-kind holder passkeys (F-003's
+simulated authenticator), and the real tRPC client to the kippu-api stand-in.
+Against the ledger service and kippu-api themselves, the journeys are kippu-e2e's.
+
 ## Device tests
 
 Flows in `.maestro/` run with [Maestro](https://maestro.mobile.dev) against an
@@ -124,6 +155,8 @@ iOS simulator (macOS runner) for every pull request.
 Cross-repository packages are not published. They are `pnpm pack` tarballs from
 pinned commits, checked by `pnpm vendor:check` in CI:
 
-- `@ticketto/sdk` and `@ticketto/profile-v0` from `libticketto`
+- `@ticketto/sdk`, `profile-v0` and `binding-offchain` — and `backend-memory`,
+  `ledger-rules` and `log` for tests — from `libticketto`
   (`pnpm vendor:libticketto <commit>`);
-- `@kippu/api` (router types, `C5`) from `kippu-api` (`pnpm vendor:kippu-api <commit>`).
+- `@kippu/api` (router types, `C5`) and `@kippu/sponsorship` (the relay client) from
+  `kippu-api` (`pnpm vendor:kippu-api <commit>`).
