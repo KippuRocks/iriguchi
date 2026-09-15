@@ -1,10 +1,10 @@
 {
   "repository": "https://github.com/KippuRocks/kippu-api.git",
-  "commit": "e232066bbb0bde37b32870e1e3faac9bff8240a2",
+  "commit": "7b79ac6819f7827709df6725053ae87dcab6c786",
   "packages": [
     {
       "file": "kippu-api-0.0.0.tgz",
-      "sha256": "64e303b1653344a8a38950e1d78f3c5b14a1f84e6d4c08e6c71522fd51c2cd3d"
+      "sha256": "525f9a27ffce6c326e4e11f583ae0c7c934eae4a65feb9187154d663a06aab30"
     },
     {
       "file": "kippu-sponsorship-0.0.0.tgz",

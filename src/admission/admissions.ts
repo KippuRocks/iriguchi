@@ -135,6 +135,8 @@ export function createAdmissions(deps: AdmissionsDeps): Admissions {
           gate: admission.gate,
           ticket: admission.pass.pass.ticket,
           passId: admission.pass.pass.id,
+          // The holder the decoded pass names, for F-025's "transfer before recording".
+          holder: admission.pass.pass.holder,
           verdict: { kind: "admitted", submission },
           presentedAt: admission.presentedAt,
           deviceClock: deps.deviceClock(),

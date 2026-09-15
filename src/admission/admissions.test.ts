@@ -99,6 +99,7 @@ describe("T-050-06 background sponsored submission and admission reports", () =>
       gate: "North",
       ticket,
       passId: pass.pass.id,
+      holder: holder.signer.account,
       presentedAt,
       verdict: { kind: "admitted", submission: { outcome: "settled" } },
     });

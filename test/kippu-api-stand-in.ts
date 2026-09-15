@@ -211,6 +211,7 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
                 zones: [],
                 metadataLocator: null,
                 metadata: { name },
+                passWindow: { windowMs: 60_000, isDefault: true },
               },
         freshness: { cursor: "", records: 1, lastRecordedAt: null },
       };
