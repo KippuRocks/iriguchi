@@ -1,6 +1,6 @@
 // Sending an admission report to kippu-api (F-024 §5.3, `operators.reportAdmission`).
 
-import type { AdmissionReport, AdmissionReportInput } from "@kippu/api";
+import type { AdmissionReport, AdmissionReportInput } from "@kippurocks/api";
 import { kippuClient } from "../kippu/client.ts";
 
 export function reportAdmission(kippuApiUrl: string) {

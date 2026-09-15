@@ -1,4 +1,4 @@
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import { afterEach, describe, expect, it } from "vitest";
 import { type StandIn, startKippuStandIn } from "../../test/kippu-api-stand-in.ts";
 import { kippuClient } from "../kippu/client.ts";

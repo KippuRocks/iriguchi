@@ -20,7 +20,7 @@
 //    (`ERR-InvalidPass`); it is within its window (`ERR-PassExpired`); then
 //    `canAttend`'s reason.
 
-import type { CheckRefusal, OperatorAuthorisation } from "@kippu/api";
+import type { CheckRefusal, OperatorAuthorisation } from "@kippurocks/api";
 import { accountOf, verifyPass } from "@ticketto/profile-v0";
 import type {
   EventId,

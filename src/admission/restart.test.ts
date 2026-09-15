@@ -2,7 +2,7 @@
 // restart, once, with its holder. Each "app" is a createAdmissions over the same
 // device storage; killing one means dropping it with its work unfinished.
 
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import { createSubmission, type Receipt, type Submission } from "@ticketto/sdk";
 import { afterEach, describe, expect, it } from "vitest";
 import { deviceStorage } from "../../test/device-storage.ts";

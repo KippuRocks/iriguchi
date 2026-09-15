@@ -4,7 +4,7 @@
 // never through Kippu's APIs (REQ-OP-2); it signs nothing (REQ-CL-2). Tests pass
 // `backend-memory` and a local sponsor instead.
 
-import { createRelaySponsor } from "@kippu/sponsorship";
+import { createRelaySponsor } from "@kippurocks/sponsorship";
 import { connectOffchainBackend } from "@ticketto/binding-offchain";
 import { createProfileV0 } from "@ticketto/profile-v0";
 import {

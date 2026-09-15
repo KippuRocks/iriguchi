@@ -1,13 +1,13 @@
 // A stand-in for kippu-api's operator procedures, served the way tRPC serves them
 // over HTTP (`/v0/trpc/<path>`, no batching, no transformer), for Iriguchi's
 // tests and for the device smoke flow (PLAN.md §5.3: clients develop against
-// recorded tRPC fixtures). Every response is typed by `@kippu/api`'s router, so a
+// recorded tRPC fixtures). Every response is typed by `@kippurocks/api`'s router, so a
 // change to the contract fails to compile here. It is not kippu-api: it holds one
 // enrolment code and a fixed set of grants, and enforces nothing else.
 
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { AdmissionReport, AppRouter, OperatorGrant } from "@kippu/api";
+import type { AdmissionReport, AppRouter, OperatorGrant } from "@kippurocks/api";
 import type { inferRouterOutputs } from "@trpc/server";
 
 type Outputs = inferRouterOutputs<AppRouter>;

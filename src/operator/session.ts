@@ -7,7 +7,7 @@
 // scan, alongside the pass (AC-E5.2, T-050-04), not here: a grant listed here can
 // be revoked a second later.
 
-import type { OperatorGrant } from "@kippu/api";
+import type { OperatorGrant } from "@kippurocks/api";
 import type { KippuClient } from "../kippu/client.ts";
 import { refusalOf } from "../kippu/errors.ts";
 import type { OperatorSessionRecord, OperatorSessionStore } from "./store.ts";
