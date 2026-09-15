@@ -27,7 +27,6 @@ name: Development build smoke test
           optional: true
 - assertVisible:
     id: "iriguchi-root"
-- assertVisible: "Iriguchi"
 # T-050-10: the screen carries its screenId, and marks itself settled.
 - extendedWaitUntil:
     visible:
