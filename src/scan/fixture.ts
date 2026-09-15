@@ -11,9 +11,24 @@ import type { ScannedCode } from "./read-pass.ts";
 
 export const SCAN_FIXTURE_ENABLED = process.env.EXPO_PUBLIC_IRIGUCHI_SCAN_FIXTURE === "1";
 
-/** The fixture's QR code, as the platform's decoder reports it; `null` if it finds none. */
+/** How long the platform's decoder may take before the fixture counts as unreadable. */
+const FIXTURE_TIMEOUT_MS = 20_000;
+
+/**
+ * The fixture's QR code, as the platform's decoder reports it; `null` if it finds
+ * none. On Android `scanFromURLAsync` loads the image through `expo-image-loader`,
+ * which must be installed: without it the call never settles.
+ */
 export async function scanFixture(): Promise<ScannedCode | null> {
   const { uri } = Image.resolveAssetSource(require("../../test/fixtures/saifu-pass.png"));
-  const [code] = await scanFromURLAsync(uri, ["qr"]);
-  return code ?? null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), FIXTURE_TIMEOUT_MS);
+  });
+  try {
+    const scanned = scanFromURLAsync(uri, ["qr"]).then(([code]) => code ?? null);
+    return await Promise.race([scanned, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
