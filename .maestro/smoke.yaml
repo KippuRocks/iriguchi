@@ -31,17 +31,24 @@ name: Development build smoke test
 # T-050-02: an operator redeems the enrolment code their organiser issued, and with
 # a grant reaches the scan screen of the gate they choose. kippu-api is the
 # stand-in tools/ci/smoke.sh starts.
+# A second attempt of the flow finds the session the first one kept, and starts
+# at the gates.
 - extendedWaitUntil:
     visible:
-      id: "operator.signin.settled"
+      id: "(operator\\.signin|gate\\.choose)\\.settled"
     timeout: 30000
-- tapOn:
-    id: "signin-code"
-- inputText: "GATE-ENROL-TEST"
-- hideKeyboard:
-    optional: true
-- tapOn:
-    id: "signin-submit"
+- runFlow:
+    when:
+      visible:
+        id: "operator.signin"
+    commands:
+      - tapOn:
+          id: "signin-code"
+      - inputText: "GATE-ENROL-TEST"
+      - hideKeyboard:
+          optional: true
+      - tapOn:
+          id: "signin-submit"
 - extendedWaitUntil:
     visible:
       id: "gate.choose.settled"
