@@ -1,26 +1,73 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { operatorServices } from "./app/services.ts";
+import { currentSession, type GateChoice, loadGates, signIn, signOut } from "./operator/session.ts";
+import type { OperatorSessionRecord } from "./operator/store.ts";
+import { ChooseGate } from "./screens/ChooseGate.tsx";
+import { OperatorSignIn } from "./screens/OperatorSignIn.tsx";
 import { useRouter } from "./screens/router.ts";
 import { Scan } from "./screens/Scan.tsx";
 import { Starting } from "./screens/Starting.tsx";
 
 /**
- * The application shell. Screens arrive with the tasks that specify them
- * (features/050-iriguchi/tasks.md); the router decides which one is shown.
+ * The application shell: sign-in until the operator has a session, then the gate
+ * they choose to operate (T-050-02).
  */
 export function App() {
+  const services = useMemo(() => operatorServices(), []);
   const router = useRouter();
   const { navigate } = router;
   const screen = router.location.screen;
+  const [session, setSession] = useState<OperatorSessionRecord | null>(null);
+  const [chosen, setChosen] = useState<GateChoice | null>(null);
 
+  // The operator's session on the device decides where the app starts.
   useEffect(() => {
-    if (screen === "app.starting") navigate("app.starting", "gate.scan", {});
-  }, [screen, navigate]);
+    if (screen !== "app.starting") return;
+    currentSession(services.store, Date.now())
+      .catch(() => null)
+      .then((record) => {
+        setSession(record);
+        if (record === null) navigate("app.starting", "operator.signin", {});
+        else navigate("app.starting", "gate.choose", {});
+      });
+  }, [screen, services, navigate]);
+
+  const redeem = useCallback(
+    async (code: string) => {
+      const outcome = await signIn(services.api(null), services.store, code);
+      if (outcome.kind === "signed-in") setSession(outcome.record);
+      return outcome;
+    },
+    [services],
+  );
+  const gates = useCallback(async () => {
+    const outcome = await loadGates(services.api(session), services.store);
+    if (outcome.kind === "signed-out") setSession(null);
+    return outcome;
+  }, [services, session]);
+  const endSession = useCallback(async () => {
+    await signOut(services.api(session), services.store);
+    setSession(null);
+    setChosen(null);
+  }, [services, session]);
 
   return (
     <View style={styles.root} testID="iriguchi-root">
-      {screen === "gate.scan" ? <Scan /> : <Starting />}
+      {screen === "operator.signin" ? (
+        <OperatorSignIn router={router} signIn={redeem} />
+      ) : screen === "gate.choose" ? (
+        <ChooseGate loadGates={gates} onChoose={setChosen} router={router} signOut={endSession} />
+      ) : screen === "gate.scan" && router.location.params.gate !== undefined ? (
+        <Scan
+          eventName={chosen?.eventName ?? null}
+          gate={router.location.params.gate}
+          router={router}
+        />
+      ) : (
+        <Starting />
+      )}
       <StatusBar style="auto" />
     </View>
   );

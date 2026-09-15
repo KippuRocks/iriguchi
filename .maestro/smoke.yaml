@@ -27,30 +27,82 @@ name: Development build smoke test
           optional: true
 - assertVisible:
     id: "iriguchi-root"
-# T-050-10: the screen carries its screenId, and marks itself settled.
+# T-050-10: each screen carries its screenId, and marks itself settled.
+# T-050-02: an operator redeems the enrolment code their organiser issued, and with
+# a grant reaches the scan screen of the gate they choose. kippu-api is the
+# stand-in tools/ci/smoke.sh starts.
+# A second attempt of the flow finds the session the first one kept, and starts
+# at the gates.
+- extendedWaitUntil:
+    visible:
+      id: "(operator\\.signin|gate\\.choose)\\.settled"
+    timeout: 30000
+- runFlow:
+    when:
+      visible:
+        id: "operator.signin"
+    commands:
+      - tapOn:
+          id: "signin-code"
+      - inputText: "GATE-ENROL-TEST"
+      - hideKeyboard:
+          optional: true
+      - tapOn:
+          id: "signin-submit"
+- extendedWaitUntil:
+    visible:
+      id: "gate.choose.settled"
+    timeout: 30000
+- assertVisible:
+    id: "gate-choice"
+    text: ".*North.*"
+- tapOn:
+    id: "gate-choice"
 - extendedWaitUntil:
     visible:
       id: "gate.scan.settled"
     timeout: 30000
 - assertVisible:
-    id: "gate.scan"
+    id: "scan-gate"
+    text: "North"
+- assertVisible: "Smoke Test Night"
 # T-050-03: a Saifu pass's QR code (test/fixtures/saifu-pass.png), read by the
 # platform's own QR decoder — Core Image on iOS, ML Kit on Android — decodes to
 # the pass it carries. Simulators have no camera, so the scan fixture stands in
 # for it (src/scan/fixture.ts); the reading path after the decoder is the camera's.
+- scrollUntilVisible:
+    element:
+      id: "scan-fixture"
+    direction: DOWN
 - tapOn:
     id: "scan-fixture"
-- extendedWaitUntil:
-    visible:
+- scrollUntilVisible:
+    element:
       id: "pass-read"
+    direction: DOWN
     timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "pass-ticket"
+    direction: DOWN
 - assertVisible:
     id: "pass-ticket"
     text: "7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e"
+# The scan screen scrolls: a small screen shows the rest of the pass below.
+- scrollUntilVisible:
+    element:
+      id: "pass-holder"
+    direction: DOWN
 - assertVisible:
     id: "pass-holder"
     text: "03867551a0096eb0f865cb69e83ef876d6c4947677048aebab2ec5d856cd1c29"
+- scrollUntilVisible:
+    element:
+      id: "scan-next"
+    direction: DOWN
 - tapOn:
     id: "scan-next"
-- assertVisible:
-    id: "scan-fixture"
+- scrollUntilVisible:
+    element:
+      id: "scan-fixture"
+    direction: DOWN
