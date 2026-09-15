@@ -28,6 +28,10 @@ export interface ScanProps {
   readonly verdictDeps: () => VerdictDeps;
   /** The operator's session has ended: forget it on the device. */
   readonly onSignedOut: () => void;
+  /** Submits an admitted pass in the background and reports it (T-050-06). */
+  readonly onAdmit: (pass: SignedAccessPass, presentedAt: number) => void;
+  /** The presentation time of a pass scanned now. */
+  readonly now: () => number;
 }
 
 /**
@@ -35,7 +39,16 @@ export interface ScanProps {
  * read as an access pass, and the pass gets its verdict (T-050-04): admit, refuse,
  * or no verdict — never an admission without one (REQ-CL-3).
  */
-export function Scan({ router, event, gate, eventName, verdictDeps, onSignedOut }: ScanProps) {
+export function Scan({
+  router,
+  event,
+  gate,
+  eventName,
+  verdictDeps,
+  onSignedOut,
+  onAdmit,
+  now,
+}: ScanProps) {
   const [permission, requestPermission] = useCameraPermissions();
   const [reading, setReading] = useState<Reading>({ kind: "scanning" });
   const [busy, setBusy] = useState(false);
@@ -47,12 +60,18 @@ export function Scan({ router, event, gate, eventName, verdictDeps, onSignedOut 
         setReading({ kind: "unreadable" });
         return;
       }
+      // The moment the pass was presented: submitted, and reported, exactly as taken.
+      const presentedAt = now();
       setReading({ kind: "checking", pass: pass.value });
       decide(verdictDeps(), { event, gate }, pass.value)
         .catch((): Verdict => ({ kind: "unavailable", pass: pass.value, unreachable: "both" }))
-        .then((verdict) => setReading({ kind: "verdict", verdict }));
+        .then((verdict) => {
+          // Admit at once; the ledger records in the background (NFR-2).
+          if (verdict.kind === "admit") onAdmit(verdict.pass, presentedAt);
+          setReading({ kind: "verdict", verdict });
+        });
     },
-    [verdictDeps, event, gate],
+    [verdictDeps, event, gate, onAdmit, now],
   );
 
   const onBarcodeScanned = useCallback(

@@ -7,7 +7,7 @@
 
 import { createServer, type IncomingMessage, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import type { AppRouter, OperatorGrant } from "@kippu/api";
+import type { AdmissionReport, AppRouter, OperatorGrant } from "@kippu/api";
 import type { inferRouterOutputs } from "@trpc/server";
 
 type Outputs = inferRouterOutputs<AppRouter>;
@@ -33,11 +33,20 @@ export interface StandIn {
   revokeSessions(): void;
   /** Revokes a grant: the next check under it is refused. */
   revokeGrant(id: string): void;
+  /** The admission reports recorded, in the order first received. */
+  readonly reports: readonly AdmissionReport[];
+  /** Makes the next `count` report requests fail as if kippu-api did not answer. */
+  dropReports(count: number): void;
   close(): Promise<void>;
 }
 
 class Refusal extends Error {
-  readonly code: "UNAUTHORIZED" | "BAD_REQUEST" | "NOT_FOUND" | "FORBIDDEN";
+  readonly code:
+    | "UNAUTHORIZED"
+    | "BAD_REQUEST"
+    | "NOT_FOUND"
+    | "FORBIDDEN"
+    | "INTERNAL_SERVER_ERROR";
   readonly httpStatus: number;
   readonly reason: string | null;
 
@@ -59,6 +68,7 @@ const JSON_RPC_CODES = {
   UNAUTHORIZED: -32001,
   FORBIDDEN: -32003,
   NOT_FOUND: -32004,
+  INTERNAL_SERVER_ERROR: -32603,
 } as const;
 
 async function body(request: IncomingMessage): Promise<unknown> {
@@ -74,14 +84,25 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
   const grants = options.grants.map((grant) => ({ ...grant }));
   let codeRedeemed = false;
   const sessions = new Set<string>();
+  /** Revoked or signed-out sessions, with when they ended. */
+  const ended = new Map<string, number>();
+  const reports: AdmissionReport[] = [];
+  let dropping = 0;
   let issued = 0;
 
+  const tokenOf = (request: IncomingMessage) =>
+    request.headers.authorization?.replace(/^Bearer /, "");
+
   const authenticated = (request: IncomingMessage) => {
-    const token = request.headers.authorization?.replace(/^Bearer /, "");
+    const token = tokenOf(request);
     if (token === undefined || !sessions.has(token)) {
       throw new Refusal("UNAUTHORIZED", 401, "no live session");
     }
     return token;
+  };
+
+  const endSession = (token: string) => {
+    if (sessions.delete(token)) ended.set(token, now());
   };
 
   const procedures: Record<string, (request: IncomingMessage, input: unknown) => unknown> = {
@@ -109,6 +130,38 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
         .filter((grant) => grant.revokedAt === null && grant.until > at)
         .sort((a, b) => a.from - b.from);
       return output;
+    },
+    // As kippu-api#81: a session revoked or signed out still reports, for 24 hours,
+    // the passes presented before it ended; a revoked grant likewise.
+    "operators.reportAdmission": (request, input) => {
+      if (dropping > 0) {
+        dropping--;
+        throw new Refusal("INTERNAL_SERVER_ERROR", 500, "dropped");
+      }
+      const report = input as Omit<AdmissionReport, "operator" | "receivedAt">;
+      const token = tokenOf(request);
+      const endedAt = token === undefined ? undefined : ended.get(token);
+      const live = token !== undefined && sessions.has(token);
+      const late =
+        endedAt !== undefined &&
+        report.presentedAt < endedAt &&
+        now() < endedAt + 24 * 60 * 60 * 1000;
+      if (!live && !late) throw new Refusal("UNAUTHORIZED", 401, "no session");
+      const existing = reports.find((r) => r.reportId === report.reportId);
+      if (existing !== undefined) return existing;
+      const granted = grants.filter(
+        (grant) => grant.event === report.event && grant.gates.includes(report.gate),
+      );
+      if (granted.length === 0) {
+        throw new Refusal("FORBIDDEN", 403, "never granted", "not-granted");
+      }
+      const recorded: Outputs["operators"]["reportAdmission"] = {
+        ...report,
+        operator: options.operatorId,
+        receivedAt: now(),
+      };
+      reports.push(recorded);
+      return recorded;
     },
     "operators.check": (request, input) => {
       authenticated(request);
@@ -164,7 +217,7 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
       return output;
     },
     "auth.session.signOut": (request) => {
-      sessions.delete(authenticated(request));
+      endSession(authenticated(request));
       const output: Outputs["auth"]["session"]["signOut"] = { signedOut: true };
       return output;
     },
@@ -213,7 +266,13 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
   const { port } = server.address() as AddressInfo;
   return {
     url: `http://${options.host ?? "127.0.0.1"}:${port}`,
-    revokeSessions: () => sessions.clear(),
+    revokeSessions: () => {
+      for (const token of [...sessions]) endSession(token);
+    },
+    reports,
+    dropReports: (count) => {
+      dropping = count;
+    },
     revokeGrant: (id) => {
       const grant = grants.find((g) => g.id === id);
       if (grant !== undefined) Object.assign(grant, { revokedAt: new Date(now()).toISOString() });
