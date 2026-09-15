@@ -70,12 +70,21 @@ name: Development build smoke test
 # platform's own QR decoder — Core Image on iOS, ML Kit on Android — decodes to
 # the pass it carries. Simulators have no camera, so the scan fixture stands in
 # for it (src/scan/fixture.ts); the reading path after the decoder is the camera's.
+- scrollUntilVisible:
+    element:
+      id: "scan-fixture"
+    direction: DOWN
 - tapOn:
     id: "scan-fixture"
-- extendedWaitUntil:
-    visible:
+- scrollUntilVisible:
+    element:
       id: "pass-read"
+    direction: DOWN
     timeout: 30000
+- scrollUntilVisible:
+    element:
+      id: "pass-ticket"
+    direction: DOWN
 - assertVisible:
     id: "pass-ticket"
     text: "7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e7e"
