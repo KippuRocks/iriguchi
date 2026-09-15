@@ -13,8 +13,8 @@ import type { inferRouterOutputs } from "@trpc/server";
 type Outputs = inferRouterOutputs<AppRouter>;
 
 export interface StandInOptions {
-  /** The one enrolment code the stand-in accepts, once. */
-  readonly code: string;
+  /** The enrolment codes the stand-in accepts, each once: one per device. */
+  readonly code: string | readonly string[];
   readonly operatorId: string;
   readonly grants: readonly OperatorGrant[];
   /** Event names, by event id, as their public metadata documents carry them. */
@@ -82,7 +82,7 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
   const lifetime = options.sessionLifetime ?? 24 * 60 * 60 * 1000;
   const now = options.now ?? (() => Date.now());
   const grants = options.grants.map((grant) => ({ ...grant }));
-  let codeRedeemed = false;
+  const unredeemed = new Set(typeof options.code === "string" ? [options.code] : options.code);
   const sessions = new Set<string>();
   /** Revoked or signed-out sessions, with when they ended. */
   const ended = new Map<string, number>();
@@ -111,10 +111,9 @@ export async function startKippuStandIn(options: StandInOptions): Promise<StandI
       if (typeof code !== "string" || code.length === 0) {
         throw new Refusal("BAD_REQUEST", 400, "expected a code");
       }
-      if (code !== options.code || codeRedeemed) {
+      if (!unredeemed.delete(code)) {
         throw new Refusal("UNAUTHORIZED", 401, "unknown, used or expired enrolment code");
       }
-      codeRedeemed = true;
       const token = `stand-in-session-${++issued}`;
       sessions.add(token);
       const output: Outputs["auth"]["operator"]["redeemEnrolmentCode"] = {
