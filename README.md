@@ -32,6 +32,7 @@ Requires Node 24 and pnpm 10.17.1.
     pnpm install
     pnpm lint          # Biome
     pnpm lint:copy     # no fee vocabulary or trust claims in user-visible strings
+    pnpm screens:check # every screen has an id; screens.json is up to date
     pnpm typecheck     # TypeScript
     pnpm test          # Vitest, on Node
     pnpm deps:check    # native dependencies match the Expo SDK
@@ -42,6 +43,23 @@ Development build, on a machine with Xcode or the Android SDK (JDK 17):
     pnpm prebuild      # generate ios/ and android/
     pnpm ios           # build, install on a simulator, start Metro
     pnpm android       # build, install on an emulator, start Metro
+
+## Screens
+
+Every screen renders inside `<Screen id>` (`src/screens/Screen.tsx`): its
+`screenId` is the root's `testID`, and a `<screenId>.settled` element appears once
+nothing is loading, so a test or a screenshot can wait for the settled screen.
+The ids and titles are the router's table, `src/screens/registry.ts`; every move
+between screens is a `navigate("from", "to", params)` call naming both
+literally. No link opens Iriguchi.
+
+`screens.json` is the screen manifest for kippu-e2e's navigation map (`F-070`
+§5.4), in the `kippu.screens/1` format Ibento and Saifu use. It is generated and
+committed:
+
+    pnpm screens:write   # regenerate screens.json
+    pnpm screens:check   # CI: fails on a screen without an id, undeclared or
+                         # non-literal navigation, or an out-of-date screens.json
 
 ## Device tests
 

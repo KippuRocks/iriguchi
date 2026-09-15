@@ -1,28 +1,23 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { useRouter } from "./screens/router.ts";
+import { Starting } from "./screens/Starting.tsx";
 
 /**
  * The application shell. Screens arrive with the tasks that specify them
- * (features/050-iriguchi/tasks.md); until then the shell only proves that a
- * development build starts and renders.
+ * (features/050-iriguchi/tasks.md); the router decides which one is shown.
  */
 export function App() {
+  const router = useRouter();
+  const screen = router.location.screen;
   return (
-    <View style={styles.container} testID="iriguchi-root">
-      <Text style={styles.title}>Iriguchi</Text>
+    <View style={styles.root} testID="iriguchi-root">
+      {screen === "app.starting" ? <Starting /> : null}
       <StatusBar style="auto" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "600",
-  },
+  root: { flex: 1, paddingTop: 48 },
 });
