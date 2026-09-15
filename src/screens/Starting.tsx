@@ -1,10 +1,10 @@
 import { StyleSheet, Text } from "react-native";
 import { Screen } from "./Screen.tsx";
 
-/** The first screen: the application shell, until the screens of later tasks exist. */
+/** While the app decides which screen to show. */
 export function Starting() {
   return (
-    <Screen id="app.starting">
+    <Screen busy id="app.starting">
       <Text style={styles.brand}>Iriguchi</Text>
     </Screen>
   );

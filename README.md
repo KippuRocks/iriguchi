@@ -61,9 +61,43 @@ committed:
     pnpm screens:check   # CI: fails on a screen without an id, undeclared or
                          # non-literal navigation, or an out-of-date screens.json
 
+## Scanning
+
+The scan screen (`gate.scan`, T-050-03) reads QR codes with `expo-camera` and reads
+each one as an access pass (`AD-13`): the pass's presented bytes,
+`@ticketto/profile-v0`'s `encodeSignedPass`, in one binary-mode segment — what
+Saifu shows.
+
+A binary payload does not survive the platforms' text readings of a QR code, so
+`expo-camera` is patched (`patches/expo-camera@57.0.5.patch`, applied by pnpm) to
+also report the symbol's decoded data codewords as `rawBytes`, base64:
+`CIQRCodeDescriptor.errorCorrectedPayload` on iOS, ML Kit's `Barcode.rawBytes` on
+Android. `src/scan/payload.ts` reads the byte segments back out of them, and
+`decodePass` decides whether they are a pass. `expo-camera` is built from source
+(`expo.autolinking.buildFromSource`) so the patch applies on Android too. Upgrading
+`expo-camera` means carrying the patch forward.
+
+Reading only decodes. Whether a pass is authentic, current and admits is the
+verdict's.
+
+Simulators and emulators have no camera to point at a phone. A development bundle
+started with `EXPO_PUBLIC_IRIGUCHI_SCAN_FIXTURE=1` offers "Scan the test pass",
+which reads `test/fixtures/saifu-pass.png` — a Saifu pass's QR code — through the
+platform's own QR decoder (`scanFromURLAsync`) and the camera's reading path. CI's
+smoke flow does this on Android and iOS. `pnpm fixtures:write` regenerates the
+fixture; its inputs are fixed, so it does not change.
+
 ## Device tests
 
 Flows in `.maestro/` run with [Maestro](https://maestro.mobile.dev) against an
 installed development build. `tools/ci/smoke.sh <android|ios>` starts Metro and
 runs the smoke flow; CI does this on an Android emulator (Ubuntu runner) and an
 iOS simulator (macOS runner) for every pull request.
+
+## Vendored packages
+
+Cross-repository packages are not published. They are `pnpm pack` tarballs from
+pinned commits, checked by `pnpm vendor:check` in CI:
+
+- `@ticketto/sdk` and `@ticketto/profile-v0` from `libticketto`
+  (`pnpm vendor:libticketto <commit>`).

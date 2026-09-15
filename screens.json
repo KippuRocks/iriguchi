@@ -7,6 +7,14 @@
       "screenId": "app.starting",
       "route": null,
       "title": "Starting",
+      "navigatesTo": [
+        "gate.scan"
+      ]
+    },
+    {
+      "screenId": "gate.scan",
+      "route": null,
+      "title": "Scan a pass",
       "navigatesTo": []
     }
   ]
